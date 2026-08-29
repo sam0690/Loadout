@@ -349,3 +349,25 @@ baseline before any code lands, so the doc work is reviewable separately from 0.
 
 Commit messages carry **no Claude attribution** — no `Claude-Session:` trailer, no
 `Co-Authored-By`, no mention in the body. Applies to every commit in this repo.
+
+## D20 — One `dumbbells` row, not adjustable-vs-fixed — APPLIED
+
+0.2 seeded `adjustable_dumbbells` and `fixed_dumbbells` as separate canonical rows.
+That is wrong, and 0.3's ingest is where it shows: `free-exercise-db` has 123 rows whose
+equipment is just `"dumbbell"`, and there is no correct single slug to map them to.
+
+`exercises.equipment` is checked as a **subset** of the context's equipment. Two rows
+means a dumbbell bench press must name one of them, and is then unavailable to a user
+holding the other — a home user with adjustables gets nothing from the entire
+fixed-dumbbell catalog. The exercise requires *a dumbbell*; which rack the user owns is
+a property of their training context, which is what 0.2's own seed comment already said.
+
+So: one `dumbbells` row, with the adjustable and fixed variants as aliases, and
+`load_increments: null` — derived from the context, per D17.
+
+**Consequence for Phase 1, not resolved here.** Nothing currently lets a training
+context declare its actual rack, so `round_to_available_load` has nowhere to read
+increments from for dumbbells. `training_contexts` holds `equipment_added` /
+`equipment_removed` as bare uuid arrays with no per-item detail. 1.1 needs either a
+per-context increment override or a sensible default rack. Flagging now; deciding when
+1.1 is written and the shape of `round_to_available_load` is known.

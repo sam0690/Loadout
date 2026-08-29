@@ -72,8 +72,10 @@ def test_load_increments_encode_the_d17_distinction(conn: sa.Connection) -> None
         ).all()
     }
     assert inc["barbell"] is None, "derived from bar weight plus plates"
+    assert inc["dumbbells"] is None, "derived from the context's rack (D20)"
     assert inc["pull_up_bar"] == [], "nothing to load"
-    assert inc["fixed_dumbbells"], "an enumerated rack"
+    assert inc["kettlebell"], "an enumerated set"
+    assert inc["cable_stack"], "an enumerated stack"
 
 
 def test_seed_rejects_unsorted_increments(tmp_path: Path) -> None:
@@ -84,3 +86,27 @@ def test_seed_rejects_unsorted_increments(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="sorted ascending"):
         read_seed(bad)
+
+
+def test_a_row_dropped_from_the_seed_is_dropped_from_the_database(
+    conn: sa.Connection,
+) -> None:
+    """Convergence includes deletion, or a renamed row leaves its aliases behind."""
+    seed = read_seed()
+    load(conn, [e for e in seed if e["slug"] != "pec_deck"])
+    assert resolve_slug_or_none(conn, "pec_deck") is None
+    assert conn.execute(
+        sa.select(sa.func.count())
+        .select_from(equipment_aliases)
+        .where(equipment_aliases.c.alias == "butterfly machine")
+    ).scalar_one() == 0
+
+    load(conn, seed)
+    assert resolve_slug(conn, "butterfly machine") == "pec_deck"
+
+
+def resolve_slug_or_none(c: sa.Connection, slug: str) -> str | None:
+    try:
+        return resolve_slug(c, slug)
+    except UnknownEquipment:
+        return None

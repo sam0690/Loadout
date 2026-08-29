@@ -59,6 +59,13 @@ def read_seed(path: Path = SEED) -> list[dict[str, Any]]:
 
 
 def load(conn: sa.Connection, entries: list[dict[str, Any]]) -> None:
+    # Rows dropped from the seed are dropped here, before the upserts. Convergence has
+    # to include deletions or the seed is not the source of truth, and a canonical row
+    # that gets renamed leaves its aliases behind to collide with the new row's on the
+    # global unique(lower(alias)) index. Aliases cascade.
+    conn.execute(
+        sa.delete(equipment).where(equipment.c.slug.notin_([e["slug"] for e in entries]))
+    )
     for e in entries:
         eid = equipment_id(e["slug"])
         row = {

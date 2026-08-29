@@ -26,29 +26,25 @@
                       squat, hinge, lunge, elbow_flexion, elbow_extension,
                       shoulder_abduction, knee_flexion, core_anti_rotation]
 
-- slug: adjustable_dumbbells
+- slug: dumbbells
   class: free_weight
   is_fixed_path: false
-  load_increments: [2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 24]
+  # One canonical row, not adjustable-vs-fixed. An exercise requires "a dumbbell"; which
+  # rack the user owns is a training-context property, and exercises.equipment is checked
+  # as a subset, so two rows would make a fixed-dumbbell exercise unavailable to someone
+  # holding adjustables. Derived increments (D17) for the same reason: the rack belongs to
+  # the context. See D20.
+  load_increments: null
   movement_patterns: [horizontal_press, vertical_press, horizontal_pull, squat, hinge,
                       lunge, elbow_flexion, elbow_extension, shoulder_abduction]
   aliases:
     - {alias: "Bowflex SelectTech", source: brand}
     - {alias: "PowerBlock", source: brand}
-    - {alias: "adjustable dumbbell", source: generic}
-
-- slug: fixed_dumbbells
-  class: free_weight
-  is_fixed_path: false
-  # The 2.5kg step at the bottom of the rack is a 100% jump from 2.5 to 5, and 25%
-  # from 10 to 12.5. This is the rack D13's 20% ceiling was written for.
-  load_increments: [2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5,
-                    35, 37.5, 40, 45, 50]
-  movement_patterns: [horizontal_press, vertical_press, horizontal_pull, squat, hinge,
-                      lunge, elbow_flexion, elbow_extension, shoulder_abduction]
-  aliases:
+    - {alias: "adjustable dumbbells", source: generic}
+    - {alias: "fixed dumbbells", source: generic}
     - {alias: "dumbbell rack", source: generic}
     - {alias: "hex dumbbells", source: generic}
+    - {alias: "dumbbell", source: ingest}
 
 - slug: kettlebell
   class: free_weight
