@@ -89,12 +89,22 @@ A change to engine logic without a corresponding property test is incomplete.
 
 ## Current phase
 
-Phase 2 — ship it. Event ingest, API surface, frontend. Auth arrives with 2.2.
+**Phase 2 is built and blocked on its exit criteria, not on more code.** PRD §10 sets
+those at 8 users and 2 weeks of real logs. Phases 2.5, 3, 4 and 5 are gated behind that
+by `build-prompts.md`, and Phase 3 in particular is meaningless against synthetic data.
 
-Phases 0 and 1 are complete: catalog (89 exercises), taxonomy, substitution graph (216
-edges, every pattern reaching a zero-equipment terminal), progression primitives, double
-progression, volume landmarks, fatigue gate, plan generator. `engine/` is pure throughout
-and property-tested.
+Built and verified:
 
-D1–D22 in `docs/decisions.md` are settled. Phases 2.5 and later still need real events
-before they mean anything.
+- **Phase 0** — catalog (89 exercises), equipment taxonomy, substitution graph (216 edges,
+  every movement pattern reaching a zero-equipment terminal)
+- **Phase 1** — progression primitives, double progression, volume landmarks, fatigue
+  gate, plan generator. `engine/` is pure throughout and property-tested, including 1000
+  generated plans against every invariant above.
+- **Phase 2** — append-only event log with projections, magic-link auth, contexts CRUD,
+  RQ plan generation, and a Next.js PWA with an offline-first IndexedDB queue.
+
+D1–D25 in `docs/decisions.md` are settled.
+
+One stated acceptance criterion is unverified: 2.3 asks for a full session logged with the
+network throttled to offline in a real browser. The queue and flush logic are tested
+directly; nobody has driven DevTools against a running stack.
