@@ -371,3 +371,40 @@ increments from for dumbbells. `training_contexts` holds `equipment_added` /
 `equipment_removed` as bare uuid arrays with no per-item detail. 1.1 needs either a
 per-context increment override or a sensible default rack. Flagging now; deciding when
 1.1 is written and the shape of `round_to_available_load` is known.
+
+## D21 — A training context declares its own loads — APPLIED
+
+D20 left this open: nothing let a context say what its rack actually is, so
+`round_to_available_load` had no increments to read for dumbbells. 1.1 and 1.2 both take
+`available_loads` as a parameter, which is the right shape for a pure function, but
+nothing could supply it.
+
+**Catalog default plus sparse override.** `equipment.load_increments` carries a typical
+rack as a documented assumption, and `training_context_loads` holds a row only where a
+context actually differs. No row means the catalog default is fine.
+
+This softens D20's "null means derived" for `dumbbells` specifically. The stricter
+reading — raise when a context has not declared a rack — is more consistent, but it puts
+a rack enumeration in front of the user's first plan, and PRD §12 already names
+onboarding friction as a thing that costs conversion. A typical rack that is sometimes
+slightly wrong beats no plan at all, and the override exists for the user who cares.
+
+`barbell` keeps `null`. It is genuinely derived from bar weight plus whichever plate
+pairs the context owns and cannot be enumerated on a catalog row at all.
+
+**The arrays stay.** D10's `(preset | added) - removed` rule is unchanged;
+`training_context_loads` sits beside it rather than replacing it. Normalising the whole
+thing into one join table would fix the referential-integrity gap D2 and D10 both note,
+but it rewrites a settled decision to solve a problem that has not bitten yet.
+
+```
+training_context_loads (
+  training_context_id uuid  -> FK training_contexts
+  equipment_id        uuid  -> FK equipment
+  load_increments     numeric[] null   -- overrides equipment.load_increments
+  bar_weight          numeric   null   -- only meaningful for a bar
+  primary key (training_context_id, equipment_id)
+)
+```
+
+A row with both columns null asserts nothing and is a mistake, so a CHECK rejects it.

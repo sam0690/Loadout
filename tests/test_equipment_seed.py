@@ -72,7 +72,7 @@ def test_load_increments_encode_the_d17_distinction(conn: sa.Connection) -> None
         ).all()
     }
     assert inc["barbell"] is None, "derived from bar weight plus plates"
-    assert inc["dumbbells"] is None, "derived from the context's rack (D20)"
+    assert inc["dumbbells"], "a typical rack the context may override (D21)"
     assert inc["pull_up_bar"] == [], "nothing to load"
     assert inc["kettlebell"], "an enumerated set"
     assert inc["cable_stack"], "an enumerated stack"

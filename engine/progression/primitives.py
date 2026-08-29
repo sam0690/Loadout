@@ -5,7 +5,8 @@ accumulate error in binary floating point, which matters when the difference bet
 holding and progressing is a 20% threshold test.
 """
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from decimal import Decimal
 
 # D5. Indexed by reps-to-failure (reps + RIR), not by both separately: a set of 8 at
@@ -22,6 +23,13 @@ MAX_REPS_TO_FAILURE = max(PERCENT_1RM)
 # is unbounded, so a rack that jumps 10kg to 30kg would satisfy it with a 200% rise.
 TARGET_INCREASE_RATIO = Decimal("0.10")
 MAX_INCREASE_RATIO = Decimal("0.20")
+
+# A barbell needs an upper bound to enumerate against. Nobody in the launch cohort is
+# loading past this, and the list is only ever searched for a neighbour.
+DEFAULT_LOAD_CEILING = Decimal("300")
+
+BARBELL = "barbell"
+PLATES = "plates"
 
 # Brzycki's denominator collapses as reps approach 37 and the estimate is not credible
 # well before that. Capped at the same place D5 stops caring.
@@ -138,3 +146,66 @@ def next_available_load(current: Decimal, loads: Sequence[Decimal]) -> Decimal |
     if (step - current) / current > MAX_INCREASE_RATIO:
         return None
     return step
+
+
+@dataclass(frozen=True)
+class EquipmentLoads:
+    """What one piece of equipment in a training context can express (D17, D21).
+
+    `increments` is None for the derived case (a barbell), empty for something with
+    nothing to load (a bench), and populated for an enumerated rack.
+    """
+
+    slug: str
+    increments: tuple[Decimal, ...] | None
+    bar_weight: Decimal | None = None
+
+
+class AmbiguousLoads(ValueError):
+    """More than one loadable item and no barbell to resolve it.
+
+    A catalog error rather than a situation to pick a winner in: if an exercise really
+    needs a dumbbell and a kettlebell at once, the prescription has to say which carries
+    the load.
+    """
+
+
+def expressible_loads(
+    equipment_slugs: Iterable[str],
+    context: Mapping[str, EquipmentLoads],
+    ceiling: Decimal = DEFAULT_LOAD_CEILING,
+) -> list[Decimal]:
+    """Loads an exercise can be prescribed at, given a resolved training context.
+
+    Composes what `queries/context_loads.sql` returns. Pure: the context arrives as an
+    argument, already merged and overridden.
+    """
+    slugs = list(equipment_slugs)
+    missing = [s for s in slugs if s not in context]
+    if missing:
+        raise KeyError(f"training context has no {missing}, so this cannot be prescribed")
+
+    if BARBELL in slugs:
+        # Derived: bar weight plus whichever plate pairs the context owns. Both live on
+        # the context, which is why the catalog row stays null (D17, D21).
+        bar = context[BARBELL].bar_weight
+        if bar is None:
+            raise ValueError(
+                f"{BARBELL} in this context has no bar_weight; set one in "
+                "training_context_loads"
+            )
+        plates = context[PLATES].increments if PLATES in context else None
+        if not plates:
+            # A bar with no plates is still a load, just the only one.
+            return [bar]
+        return barbell_loads(bar, plates, ceiling)
+
+    loadable = [context[s] for s in slugs if context[s].increments]
+    if not loadable:
+        return []
+    if len(loadable) > 1:
+        raise AmbiguousLoads(
+            f"{[e.slug for e in loadable]} are all loadable; which one carries the load?"
+        )
+    assert loadable[0].increments is not None
+    return sorted(loadable[0].increments)

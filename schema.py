@@ -152,3 +152,24 @@ training_contexts = sa.Table(
     # Load a user's contexts at session start.
     sa.Index("ix_training_contexts_user_id", "user_id"),
 )
+
+training_context_loads = sa.Table(
+    "training_context_loads", metadata,
+    sa.Column(
+        "training_context_id", UUID(as_uuid=True),
+        sa.ForeignKey("training_contexts.id", ondelete="CASCADE"), primary_key=True,
+    ),
+    sa.Column(
+        "equipment_id", UUID(as_uuid=True),
+        sa.ForeignKey("equipment.id", ondelete="CASCADE"), primary_key=True,
+    ),
+    # D21. Sparse: a row exists only where the context differs from the catalog. Null
+    # here means "the catalog default is fine", not "not loadable".
+    sa.Column("load_increments", ARRAY(sa.Numeric), nullable=True),
+    # Only meaningful for a bar. 20kg men's, 15kg women's, 7kg aluminium.
+    sa.Column("bar_weight", sa.Numeric, nullable=True),
+    sa.CheckConstraint(
+        "load_increments IS NOT NULL OR bar_weight IS NOT NULL",
+        name="ck_context_loads_says_something",
+    ),
+)

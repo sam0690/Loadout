@@ -8,11 +8,14 @@ from engine.progression.double_progression import (
 from engine.progression.primitives import (
     MAX_INCREASE_RATIO,
     MAX_REPS_TO_FAILURE,
+    AmbiguousLoads,
+    EquipmentLoads,
     RepsOutOfRange,
     barbell_loads,
     best_e1rm_estimate,
     brzycki_e1rm,
     epley_e1rm,
+    expressible_loads,
     next_available_load,
     rir_to_percent_1rm,
     round_to_available_load,
@@ -20,6 +23,9 @@ from engine.progression.primitives import (
 
 __all__ = [
     "MAX_REPS_TO_FAILURE",
+    "AmbiguousLoads",
+    "EquipmentLoads",
+    "expressible_loads",
     "Decision",
     "ExerciseState",
     "LoggedSet",

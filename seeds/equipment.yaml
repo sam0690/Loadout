@@ -32,9 +32,13 @@
   # One canonical row, not adjustable-vs-fixed. An exercise requires "a dumbbell"; which
   # rack the user owns is a training-context property, and exercises.equipment is checked
   # as a subset, so two rows would make a fixed-dumbbell exercise unavailable to someone
-  # holding adjustables. Derived increments (D17) for the same reason: the rack belongs to
-  # the context. See D20.
-  load_increments: null
+  # holding adjustables. See D20.
+  #
+  # ASSUMPTION, not a fact about any user: a typical commercial rack. A training context
+  # overrides it in training_context_loads (D21). Onboarding does not have to ask before
+  # the first plan exists, and a user with a 5-20kg home set corrects it later.
+  load_increments: [2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5,
+                    35, 37.5, 40]
   movement_patterns: [horizontal_press, vertical_press, horizontal_pull, squat, hinge,
                       lunge, elbow_flexion, elbow_extension, shoulder_abduction]
   aliases:
