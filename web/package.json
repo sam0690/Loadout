@@ -1,0 +1,31 @@
+{
+  "name": "loadout-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "gen:api": "cd .. && uv run python scripts/dump_openapi.py && cd web && openapi-typescript ../openapi.json -o src/lib/api/schema.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.0",
+    "dexie": "^4.0.10",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "fake-indexeddb": "^6.0.0",
+    "openapi-typescript": "^7.4.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

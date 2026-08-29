@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* One-handed, mid-set, possibly sweaty (build prompt 2.3). Everything below serves that:
+   a 56px minimum tap target rather than the 44px guideline, because the user is not
+   looking carefully; a dark ground because a gym at 6am is not a bright room; and no
+   modal anywhere, because a dialog you cannot dismiss with a thumb is a trap. */
+:root {
+  --tap: 3.5rem;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: #0b0d10;
+  color: #e8eaed;
+  -webkit-tap-highlight-color: transparent;
+  /* A logged set must never be lost to an accidental text selection drag. */
+  user-select: none;
+}
+
+button {
+  min-height: var(--tap);
+  touch-action: manipulation;
+}
