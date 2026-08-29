@@ -53,9 +53,9 @@ Do not skip this. If the summary comes back wrong, everything downstream is wron
 >
 > Target ~80 exercises covering all movement patterns, not the full set. Quality over coverage. The review file is a feature — I want to hand-check the ambiguous cases.
 >
-> Structure as separate `fetch`, `normalize`, `load` stages that can run independently, with raw data cached to disk so re-running normalization doesn't re-fetch.
+> Structure as separate `fetch`, `normalize`, `load` stages that can run independently (`uv run python -m ingest.fetch` and so on), with raw data cached to disk so re-running normalization doesn't re-fetch.
 >
-> Acceptance: `just ingest` populates the catalog. Every exercise has a movement_pattern and non-empty primary_muscles. Ambiguous cases land in `review.csv` instead of the database.
+> Acceptance: `uv run python -m ingest` populates the catalog. Every exercise has a movement_pattern and non-empty primary_muscles. Ambiguous cases land in `review.csv` instead of the database.
 
 ## 0.4 Substitution graph traversal
 
