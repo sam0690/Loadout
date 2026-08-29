@@ -130,3 +130,10 @@ def test_a_row_dropped_from_the_selection_is_dropped_from_the_catalog(
         assert c.execute(
             sa.select(sa.func.count()).select_from(exercises)
         ).scalar_one() == len(catalog)
+    # Narrowing the catalog cascaded the dropped exercises' edges away. Restoring the
+    # rows does not restore those, so put the graph back for whatever runs next.
+    from ingest.edges import SEED as EDGE_SEED
+    from ingest.edges import load_edges
+
+    with engine.begin() as c:
+        load_edges(c, EDGE_SEED)

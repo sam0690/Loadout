@@ -36,13 +36,22 @@ def pytest_sessionstart() -> None:
     subprocess.run(
         ["uv", "run", "alembic", "upgrade", "head"], check=True, capture_output=True
     )
-    # The equipment taxonomy is a prerequisite for anything that loads exercises, since
-    # the exercise loader resolves every slug through the alias table. Seeding it here
-    # rather than in one module's fixture removes an ordering dependence between files.
+    # Seed the whole catalog here rather than in one module's fixture. Equipment is a
+    # prerequisite for exercises (the loader resolves every slug through the alias
+    # table), exercises are a prerequisite for edges, and edges are a prerequisite for
+    # anything that traverses the graph. Leaving that chain to per-module fixtures makes
+    # a test pass or fail depending on which file ran first.
+    from ingest.edges import SEED as EDGE_SEED
+    from ingest.edges import load_edges
     from ingest.equipment import load as load_equipment
     from ingest.equipment import read_seed
+    from ingest.load import load as load_exercises
+    from ingest.normalize import run as normalize_run
 
     engine = sa.create_engine(DATABASE_URL)
+    chosen, _ = normalize_run()
     with engine.begin() as conn:
         load_equipment(conn, read_seed())
+        load_exercises(conn, chosen)
+        load_edges(conn, EDGE_SEED)
     engine.dispose()
