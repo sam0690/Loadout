@@ -41,3 +41,19 @@ def build_url() -> str:
 
 
 DATABASE_URL = build_url()
+
+
+def jwt_secret() -> str:
+    """Signing key for session tokens. Required, with no default.
+
+    A default here would mean every deployment that forgot to set one shares a secret,
+    and anybody who read the source could mint a session for any user.
+    """
+    _load_env_file()
+    secret = os.environ.get("JWT_SECRET")
+    if not secret:
+        raise RuntimeError(
+            "JWT_SECRET is not set. Copy .env.example to .env and put a random value in "
+            "it: python -c 'import secrets; print(secrets.token_hex(32))'"
+        )
+    return secret

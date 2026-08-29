@@ -138,8 +138,13 @@ gym_archetypes = sa.Table(
 training_contexts = sa.Table(
     "training_contexts", metadata,
     sa.Column("id", UUID(as_uuid=True), primary_key=True),
-    # D2. No FK until the users table lands with auth in Phase 2.
-    sa.Column("user_id", UUID(as_uuid=True), nullable=False),
+    # D2 deferred this FK until the users table existed. It does, as of 2.2a.
+    # Named explicitly: an anonymous constraint cannot be dropped on downgrade.
+    sa.Column(
+        "user_id", UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE", name="fk_training_contexts_user"),
+        nullable=False,
+    ),
     sa.Column("label", sa.Text, nullable=False),
     sa.Column(
         "archetype_id", UUID(as_uuid=True),
@@ -217,4 +222,31 @@ exercise_state = sa.Table(
     # D15: seeded across a graph edge, never trained against yet.
     sa.Column("is_estimated", sa.Boolean, nullable=False, server_default=sa.false()),
     sa.Column("last_performed_at", sa.DateTime(timezone=True), nullable=True),
+)
+
+# --- Auth (2.2a) ------------------------------------------------------------------
+
+users = sa.Table(
+    "users", metadata,
+    sa.Column("id", UUID(as_uuid=True), primary_key=True),
+    sa.Column("email", sa.Text, nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
+              server_default=sa.func.now()),
+    # Addresses are case-insensitive in practice, so "Sam@x.com" must not become a
+    # second account. Same functional-unique trick as equipment_aliases.
+    sa.Index("uq_users_lower_email", sa.text("lower(email)"), unique=True),
+)
+
+magic_links = sa.Table(
+    "magic_links", metadata,
+    # The token itself is never stored. A leaked database must not hand out logins.
+    sa.Column("token_hash", sa.Text, primary_key=True),
+    sa.Column(
+        "user_id", UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False,
+    ),
+    sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+    # Single use. Set on the first successful verify; a second attempt finds it non-null.
+    sa.Column("consumed_at", sa.DateTime(timezone=True), nullable=True),
+    sa.Index("ix_magic_links_user", "user_id"),
 )

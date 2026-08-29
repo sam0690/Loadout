@@ -10,15 +10,19 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
+import jwt
 import pytest
 import sqlalchemy as sa
 from fastapi.testclient import TestClient
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from api.auth import ALGORITHM
+from api.auth import engine as auth_engine
 from api.events import engine as engine_dep
 from api.main import app
-from db import DATABASE_URL
+from db import DATABASE_URL, jwt_secret
 from projections.exercise_state import rebuild
-from schema import events, exercise_state, exercises
+from schema import events, exercise_state, exercises, users
 
 D = Decimal
 USER = uuid.UUID(int=42)
@@ -45,6 +49,11 @@ def two_exercises(db: sa.Engine) -> tuple[uuid.UUID, uuid.UUID]:
 @pytest.fixture(autouse=True)
 def clean(db: sa.Engine) -> None:
     with db.begin() as c:
+        c.execute(
+            pg_insert(users)
+            .values(id=USER, email=f"events-{USER}@example.test")
+            .on_conflict_do_nothing(index_elements=["id"])
+        )
         c.execute(sa.delete(exercise_state).where(exercise_state.c.user_id == USER))
         # events is append-only, so the trigger has to be stepped around to clean up.
         # Only a test may do this, and only because it wrote the rows itself.
@@ -70,10 +79,27 @@ def a_set(
     }
 
 
+def session_for(user_id: uuid.UUID) -> dict[str, str]:
+    """A session token for the fixture user.
+
+    Minted directly rather than through the magic-link flow: these tests are about event
+    ingest, and going through auth to reach it would couple two suites.
+    """
+    now = datetime.now(UTC)
+    claims = {
+        "sub": str(user_id),
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(days=1)).timestamp()),
+    }
+    return {"Authorization": f"Bearer {jwt.encode(claims, jwt_secret(), ALGORITHM)}"}
+
+
 @pytest.fixture
 def client(db: sa.Engine) -> Iterator[TestClient]:
     app.dependency_overrides[engine_dep] = lambda: db
-    yield TestClient(app)
+    app.dependency_overrides[auth_engine] = lambda: db
+    client = TestClient(app, headers=session_for(USER))
+    yield client
     app.dependency_overrides.clear()
 
 
@@ -100,12 +126,12 @@ def test_submitting_the_same_batch_twice_produces_identical_state(
         a_set(a, 10, 2, "60", 0), a_set(a, 9, 1, "60", 5), a_set(b, 12, 2, "40", 10),
     ]}
 
-    first = client.post("/events", json=batch, params={"user_id": str(USER)})
+    first = client.post("/events", json=batch)
     assert first.status_code == 200, first.text
     assert first.json()["stored"] == 3
     after_first = snapshot(db)
 
-    second = client.post("/events", json=batch, params={"user_id": str(USER)})
+    second = client.post("/events", json=batch)
     assert second.status_code == 200
     assert second.json()["stored"] == 0, "a replayed batch stores nothing"
     assert snapshot(db) == after_first
@@ -121,8 +147,8 @@ def test_a_retry_is_free_even_when_it_overlaps_a_new_batch(
 ) -> None:
     a, _ = two_exercises
     one, two = a_set(a, 10, 2, "60", 0), a_set(a, 11, 2, "60", 5)
-    client.post("/events", json={"events": [one]}, params={"user_id": str(USER)})
-    got = client.post("/events", json={"events": [one, two]}, params={"user_id": str(USER)})
+    client.post("/events", json={"events": [one]})
+    got = client.post("/events", json={"events": [one, two]})
     assert got.json()["stored"] == 1, "only the genuinely new event lands"
 
 
@@ -133,7 +159,7 @@ def test_duplicate_ids_inside_one_batch_are_rejected(
     a, _ = two_exercises
     one = a_set(a, 10, 2, "60", 0)
     got = client.post(
-        "/events", json={"events": [one, dict(one)]}, params={"user_id": str(USER)}
+        "/events", json={"events": [one, dict(one)]}
     )
     assert got.status_code == 422
 
@@ -153,7 +179,6 @@ def test_rebuilding_from_the_log_reproduces_state_exactly(
             a_set(b, 5, 0, "40", 10),
             a_set(a, 12, 2, "62.5", day_two), a_set(b, 4, 0, "40", day_two + 10),
         ]},
-        params={"user_id": str(USER)},
     )
     before = snapshot(db)
     assert before, "the projection should not be empty"
@@ -171,7 +196,6 @@ def test_a_full_rebuild_of_every_user_reproduces_state(
     a, _ = two_exercises
     client.post(
         "/events", json={"events": [a_set(a, 10, 2, "60", 0)]},
-        params={"user_id": str(USER)},
     )
     before = snapshot(db)
     with db.begin() as c:
@@ -195,7 +219,6 @@ def test_streaks_come_from_the_limiting_set_of_each_local_day(
             # Day two: another miss. Two consecutive failures.
             a_set(a, 5, 0, "60", day_two),
         ]},
-        params={"user_id": str(USER)},
     )
     with db.connect() as c:
         row = c.execute(
@@ -225,7 +248,6 @@ def test_a_swap_seeds_the_substitute_rather_than_handing_it_the_state(
                 "client_ts": (START + timedelta(minutes=20)).isoformat(), "user_tz": TZ,
             },
         ]},
-        params={"user_id": str(USER)},
     )
     with db.connect() as c:
         seeded = c.execute(
@@ -245,11 +267,12 @@ def test_e1rm_is_not_computed_from_a_set_too_far_from_failure(
     client.post(
         "/events",
         json={"events": [a_set(a, 12, 6, "60", 0, bottom=8, top=20)]},
-        params={"user_id": str(USER)},
     )
     with db.connect() as c:
         row = c.execute(
-            sa.select(exercise_state).where(exercise_state.c.exercise_id == a)
+            sa.select(exercise_state).where(
+                exercise_state.c.user_id == USER, exercise_state.c.exercise_id == a
+            )
         ).one()
     assert row.e1rm is None
     assert row.current_load == D("60"), "the set is still recorded"
@@ -265,7 +288,6 @@ def test_the_event_log_cannot_be_updated_or_deleted(
     a, _ = two_exercises
     client.post(
         "/events", json={"events": [a_set(a, 10, 2, "60", 0)]},
-        params={"user_id": str(USER)},
     )
     with db.begin() as c, pytest.raises(sa.exc.ProgrammingError, match="append-only"):
         c.execute(
@@ -284,7 +306,7 @@ def test_a_naive_timestamp_is_refused(
     a, _ = two_exercises
     bad = a_set(a, 10, 2, "60", 0)
     bad["client_ts"] = "2026-08-24T18:00:00"
-    got = client.post("/events", json={"events": [bad]}, params={"user_id": str(USER)})
+    got = client.post("/events", json={"events": [bad]})
     assert got.status_code == 422
 
 
@@ -294,5 +316,5 @@ def test_an_unknown_timezone_is_refused(
     a, _ = two_exercises
     bad = a_set(a, 10, 2, "60", 0)
     bad["user_tz"] = "Mars/Olympus_Mons"
-    got = client.post("/events", json={"events": [bad]}, params={"user_id": str(USER)})
+    got = client.post("/events", json={"events": [bad]})
     assert got.status_code == 422

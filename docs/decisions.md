@@ -446,3 +446,44 @@ these properly and is worth considering before the Phase 2 launch, since the lau
 is precisely the people who have a table and no gym.
 
 89 exercises, 216 edges, every pattern reaching a terminal from every node.
+
+## D23 — Magic-link auth, stateless sessions — APPLIED
+
+The build prompt says email magic link, no passwords. Two halves with different storage
+models, deliberately.
+
+**The link is stateful.** `magic_links` stores a sha256 of the token, never the token, so
+a leaked database hands out no logins. Single use, enforced by `consumed_at`, and valid
+for 15 minutes. Single-use is the property that matters and a self-contained token cannot
+express it.
+
+**The session is a stateless JWT.** No session table and no per-request database hit.
+
+**The consequence, stated plainly: there is no revocation.** A leaked or mis-delivered
+session token stays valid until it expires, and the only lever is the 7-day lifetime. If
+revocation is ever needed it means a denylist table — which is the table this choice
+avoided, so the trade would be reversed rather than extended. Worth revisiting before the
+cohort grows beyond people you know personally.
+
+`sub`, `iat` and `exp` are all required on decode. A token without an expiry never expires,
+so its absence is a rejection rather than a default.
+
+**Delivery is a log line.** `send_link()` writes the URL to the log; swapping its body for
+an HTTP call to a provider is the whole change at launch. No adapter, no interface, no
+config with one value — an abstraction with one implementation is what CLAUDE.md forbids.
+
+**`/auth/request` never reveals whether an address is known.** Same status and same body
+either way. It is unauthenticated by definition, so a different answer for an unknown
+email would be a user-enumeration oracle.
+
+**What this closes.** 2.1 shipped `POST /events` with `user_id` as a query parameter and
+nothing behind it: anyone could write events attributed to anyone. The user id now comes
+from the bearer token and nowhere else, and a test asserts that naming a victim in the
+query string is ignored.
+
+**Known gap, not built.** `/auth/request` has no rate limit and is an email-send
+amplifier. Harmless while delivery is a log line; it needs one before a real provider is
+wired in. Recorded rather than half-built.
+
+D2's deferred foreign key on `training_contexts.user_id` is also added here, since the
+users table it was waiting for now exists.

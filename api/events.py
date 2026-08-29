@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.dialects.postgresql import insert
 
+from api.auth import CurrentUser
 from db import DATABASE_URL
 from projections.exercise_state import rebuild
 from schema import EVENT_TYPES, events
@@ -69,7 +70,9 @@ def engine() -> sa.Engine:
 @router.post("/events", response_model=Accepted)
 def post_events(
     batch: Batch,
-    user_id: uuid.UUID,
+    # From the bearer token and nowhere else. This was a query parameter until 2.2a,
+    # which meant anyone could write events attributed to anyone.
+    user_id: CurrentUser,
     db: Annotated[sa.Engine, Depends(engine)],
 ) -> Accepted:
     rows = [

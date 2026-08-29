@@ -2,7 +2,9 @@
 
 from fastapi import FastAPI
 
-from api.events import router
+from api.auth import router as auth_router
+from api.events import router as events_router
 
 app = FastAPI(title="Loadout", version="0.1.0")
-app.include_router(router)
+app.include_router(auth_router)
+app.include_router(events_router)

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from db import DATABASE_URL
 from engine.progression import (
@@ -14,7 +15,13 @@ from engine.progression import (
     barbell_loads,
     expressible_loads,
 )
-from schema import equipment, gym_archetypes, training_context_loads, training_contexts
+from schema import (
+    equipment,
+    gym_archetypes,
+    training_context_loads,
+    training_contexts,
+    users,
+)
 
 D = Decimal
 QUERY = (Path(__file__).resolve().parent.parent / "queries" / "context_loads.sql").read_text()
@@ -93,6 +100,13 @@ def context(request: pytest.FixtureRequest) -> sa.Engine:
     engine = sa.create_engine(DATABASE_URL)
     ctx_id, arch_id = uuid.uuid4(), uuid.uuid4()
     with engine.begin() as c:
+        # training_contexts.user_id has a real foreign key as of 2.2a (D2 deferred it
+        # until the users table existed), so a fabricated id is no longer insertable.
+        c.execute(
+            pg_insert(users)
+            .values(id=USER, email=f"ctx-{USER}@example.test")
+            .on_conflict_do_nothing(index_elements=["id"])
+        )
         ids: dict[str, uuid.UUID] = {
             r.slug: r.id
             for r in c.execute(
