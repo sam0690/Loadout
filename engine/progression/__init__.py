@@ -1,5 +1,13 @@
+from engine.progression.double_progression import (
+    Decision,
+    ExerciseState,
+    LoggedSet,
+    Prescription,
+    next_prescription,
+)
 from engine.progression.primitives import (
     MAX_INCREASE_RATIO,
+    MAX_REPS_TO_FAILURE,
     RepsOutOfRange,
     barbell_loads,
     best_e1rm_estimate,
@@ -11,6 +19,12 @@ from engine.progression.primitives import (
 )
 
 __all__ = [
+    "MAX_REPS_TO_FAILURE",
+    "Decision",
+    "ExerciseState",
+    "LoggedSet",
+    "Prescription",
+    "next_prescription",
     "MAX_INCREASE_RATIO",
     "RepsOutOfRange",
     "barbell_loads",
