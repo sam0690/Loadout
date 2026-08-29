@@ -3,15 +3,13 @@
 Needs the compose database up: `docker compose up -d`.
 """
 
-import os
 import subprocess
 
 import pytest
 import sqlalchemy as sa
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql+psycopg://loadout:loadout@localhost:5433/loadout"
-)
+from db import DATABASE_URL
+
 TABLES = {
     "equipment", "equipment_aliases", "exercises", "exercise_edges",
     "gym_archetypes", "muscle_groups", "training_contexts",

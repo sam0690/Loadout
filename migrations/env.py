@@ -1,17 +1,16 @@
-import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from db import DATABASE_URL
 from schema import metadata
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-DEFAULT_URL = "postgresql+psycopg://loadout:loadout@localhost:5433/loadout"
-config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL", DEFAULT_URL))
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 target_metadata = metadata
 

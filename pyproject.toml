@@ -6,6 +6,7 @@ dependencies = [
     "alembic>=1.14",
     "fastapi>=0.115",
     "psycopg[binary]>=3.2",
+    "pyyaml>=6.0.3",
     "sqlalchemy>=2.0",
 ]
 
@@ -15,6 +16,7 @@ dev = [
     "mypy>=1.14",
     "pytest>=8.3",
     "ruff>=0.8",
+    "types-pyyaml>=6.0.12.20260815",
 ]
 
 [tool.ruff]
@@ -36,8 +38,9 @@ files = ["schema.py", "migrations", "tests"]
 # --strict is required on engine/ (CLAUDE.md). engine/ arrives at 0.4; the block is
 # here so it starts biting the moment that package exists rather than being retrofitted.
 [[tool.mypy.overrides]]
-module = "engine.*"
+module = ["engine.*", "ingest.*"]
 strict = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
