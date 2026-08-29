@@ -20,8 +20,8 @@ from ingest.edges import (
     load_edges,
     read_catalog,
 )
+from ingest.load import full_catalog
 from ingest.load import load as load_exercises
-from ingest.normalize import run as normalize_run
 from schema import exercise_edges, exercises
 
 QUERY = (Path(__file__).resolve().parent.parent / "queries" / "substitutes.sql").read_text()
@@ -30,9 +30,8 @@ QUERY = (Path(__file__).resolve().parent.parent / "queries" / "substitutes.sql")
 @pytest.fixture(scope="module")
 def seeded() -> sa.Engine:
     engine = sa.create_engine(DATABASE_URL)
-    chosen, _ = normalize_run()
     with engine.begin() as c:
-        load_exercises(c, chosen)
+        load_exercises(c, full_catalog())
         load_edges(c, SEED)
     return engine
 
@@ -128,34 +127,20 @@ def test_every_pattern_with_a_terminal_reaches_it(seeded: sa.Engine) -> None:
             assert all(not s.node.equipment for s in subs), row.slug
 
 
-def test_patterns_without_a_terminal_raise_rather_than_return_nothing(
-    seeded: sa.Engine,
-) -> None:
-    """D12: a catalog gap is loud, not an empty plan."""
+def test_no_pattern_lacks_a_zero_equipment_terminal(seeded: sa.Engine) -> None:
+    """D22 closed the seven gaps D12 recorded. This is what stops them reopening."""
     with seeded.connect() as c:
         rows, _ = read_catalog(c)
-        gaps = find_gaps(rows)
-        assert gaps, "expected known catalog gaps"
-        gapped = next(r for r in rows if r.pattern == gaps[0])
-        row = c.execute(
-            sa.select(exercises.c.id).where(exercises.c.slug == gapped.slug)
-        ).scalar_one()
-        got = c.execute(sa.text(QUERY), {"exercise_id": row, "max_depth": 3}).all()
-        nodes = [
-            Node(r.id, r.slug, r.movement_pattern, frozenset(r.equipment), r.difficulty)
-            for r in got
-        ]
-        edges = [
-            Edge(r.id, uuid.UUID(x["to_id"]), x["edge_type"], x["delta"])
-            for r in got
-            for x in (
-                r.out_edges if isinstance(r.out_edges, list) else json.loads(r.out_edges)
-            )
-        ]
-        with pytest.raises(NoSubstituteFound):
-            find_substitutes(
-                Graph.build(nodes, edges), row, frozenset(), Reason.UNAVAILABLE_OWNED
-            )
+    assert find_gaps(rows) == []
+
+
+def test_an_unreachable_target_still_raises_rather_than_returning_nothing() -> None:
+    """D12's behaviour survives even though the catalog no longer triggers it."""
+    lonely = Node(uuid.uuid4(), "lonely", "squat", frozenset({"barbell"}), 5)
+    with pytest.raises(NoSubstituteFound):
+        find_substitutes(
+            Graph.build([lonely], []), lonely.id, frozenset(), Reason.UNAVAILABLE_OWNED
+        )
 
 
 def test_load_is_idempotent(seeded: sa.Engine) -> None:

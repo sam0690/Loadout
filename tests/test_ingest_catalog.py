@@ -9,15 +9,15 @@ import sqlalchemy as sa
 from db import DATABASE_URL
 from ingest import taxonomy as tx
 from ingest.equipment import UnknownEquipment
-from ingest.load import load
+from ingest.load import full_catalog, load
 from ingest.normalize import Exercise, match_pattern, normalize_one, run, select
 from schema import exercises
 
 
 @pytest.fixture(scope="module")
 def catalog() -> list[Exercise]:
-    chosen, _ = run()
-    return chosen
+    """Everything the loader converges on: ingested plus hand-authored terminals."""
+    return full_catalog()
 
 
 def test_every_exercise_has_a_pattern_and_a_primary_muscle(
@@ -69,6 +69,9 @@ def test_unmodelled_muscles_are_reviewed() -> None:
 
 def test_specific_keywords_beat_general_ones() -> None:
     assert match_pattern("Glute Kickback") == "hinge"
+    assert match_pattern("Handstand Push-Ups") == "vertical_press", "beats 'push-up'"
+    assert match_pattern("Step-up with Knee Raise") == "lunge", "beats 'knee raise'"
+    assert match_pattern("Hanging Pike") is None, "'pike push' must not catch this"
     assert match_pattern("Triceps Kickback") == "elbow_extension"
     assert match_pattern("Calf Press") == "calf_raise"
     assert match_pattern("Leg Press") == "squat"
@@ -110,9 +113,11 @@ def test_review_file_is_written_with_a_header(tmp_path: Path) -> None:
 
 
 def test_normalized_json_matches_what_was_loaded() -> None:
+    """The ingested half stays at 80; terminals are authored separately (D22)."""
     from ingest.normalize import NORMALIZED
     on_disk = json.loads(NORMALIZED.read_text())
     assert len(on_disk) == 80
+    assert len(full_catalog()) == 89
 
 
 def test_a_row_dropped_from_the_selection_is_dropped_from_the_catalog(

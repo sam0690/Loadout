@@ -70,15 +70,19 @@ MACHINE_BY_PATTERN = {
 # beat "press", and "calf press" must beat "leg press". The source has no pattern field
 # at all, so this table is the single largest judgement call in the ingest.
 PATTERN_RULES: list[tuple[tuple[str, ...], str]] = [
+    # These two beat the generic "push-up" and "press" rules below, which would
+    # otherwise claim the canonical bodyweight vertical presses for horizontal_press.
+    # "pike push" rather than bare "pike", which would swallow the hanging ab variety.
+    (("handstand", "pike push", "pike press"), "vertical_press"),
     (("calf raise", "calf press", "donkey calf", "toe raise"), "calf_raise"),
     (("leg extension", "knee extension"), "knee_extension"),
     (("leg curl", "hamstring curl", "nordic", "glute-ham", "glute ham"), "knee_flexion"),
     (("lateral raise", "side lateral", "side raise", "upright row"), "shoulder_abduction"),
+    (("lunge", "split squat", "step-up", "step up"), "lunge"),
     (("pallof", "russian twist", "woodchop", "wood chop", "side plank",
       "side bridge", "oblique"), "core_anti_rotation"),
     (("plank", "ab roller", "ab wheel", "rollout", "crunch", "sit-up", "situp",
       "leg raise", "knee raise", "hollow", "dead bug", "v-up"), "core_anti_extension"),
-    (("lunge", "split squat", "step-up", "step up"), "lunge"),
     (("deadlift", "good morning", "hip thrust", "glute bridge", "swing",
       "back extension", "hyperextension", "pull-through", "romanian",
       "glute kickback"), "hinge"),

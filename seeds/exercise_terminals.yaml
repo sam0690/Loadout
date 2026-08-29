@@ -1,0 +1,104 @@
+# Hand-authored zero-equipment terminals, one per movement pattern that free-exercise-db
+# cannot supply. Loaded alongside the ingested catalog, not generated from it.
+#
+# WHY THESE EXIST. D12 records that seven patterns had no zero-equipment terminal, so a
+# user with nothing got NoSubstituteFound for half the movement patterns -- in exactly the
+# minimal-equipment case PRD §1 calls the sharpest differentiator. Two of the seven were
+# rule-ordering bugs in ingest/taxonomy.py and are fixed there. The rest are real gaps in
+# the source: it has no bodyweight calf raise, no sissy squat and no pike push-up, only
+# stretches with those words in the name.
+#
+# HONESTY NOTE. Five of these are unarguable. Two are not, and are marked `weak: true`
+# below. Pulling and lateral raising against no external resistance is a compromise, not
+# a good exercise, and the right long-term fix is a catalog that admits a doorway or a
+# table as equipment rather than pretending the floor substitutes for a bar.
+#
+# difficulty is within-pattern (PRD §7), so these sit at the bottom of their own chain.
+
+- slug: bodyweight_standing_calf_raise
+  name: Standing Calf Raise
+  movement_pattern: calf_raise
+  primary_muscles: [calves]
+  secondary_muscles: []
+  difficulty: 2
+  unilateral: false
+
+- slug: bodyweight_single_leg_calf_raise
+  name: Single-Leg Calf Raise
+  movement_pattern: calf_raise
+  primary_muscles: [calves]
+  secondary_muscles: []
+  difficulty: 4
+  unilateral: true
+
+- slug: bodyweight_lunge
+  name: Bodyweight Lunge
+  movement_pattern: lunge
+  primary_muscles: [quads]
+  secondary_muscles: [glutes, hamstrings]
+  difficulty: 2
+  unilateral: true
+
+- slug: bodyweight_bulgarian_split_squat
+  name: Bulgarian Split Squat
+  movement_pattern: lunge
+  primary_muscles: [quads]
+  secondary_muscles: [glutes]
+  difficulty: 5
+  unilateral: true
+
+- slug: bodyweight_pike_push_up
+  name: Pike Push-Up
+  movement_pattern: vertical_press
+  primary_muscles: [front_delts]
+  secondary_muscles: [triceps]
+  difficulty: 4
+  unilateral: false
+
+- slug: bodyweight_sissy_squat
+  name: Sissy Squat
+  movement_pattern: knee_extension
+  primary_muscles: [quads]
+  secondary_muscles: []
+  difficulty: 4
+  unilateral: false
+
+# --- the two compromises -----------------------------------------------------
+
+- slug: bodyweight_prone_ytw_raise
+  name: Prone Y-T-W Raise
+  movement_pattern: horizontal_pull
+  primary_muscles: [upper_back]
+  secondary_muscles: [rear_delts]
+  difficulty: 2
+  unilateral: false
+  # ? WEAK. A horizontal pull needs something to pull on; lying face down and lifting the
+  # ? arms trains the same muscles with only limb weight. It is a real exercise and a
+  # ? correct terminal, but it will not build a back. An inverted row under a table is the
+  # ? honest answer and needs the catalog to model a table.
+  weak: true
+
+- slug: bodyweight_self_resisted_curl
+  name: Self-Resisted Curl
+  movement_pattern: elbow_flexion
+  primary_muscles: [biceps]
+  secondary_muscles: [forearms]
+  difficulty: 2
+  unilateral: true
+  # ? WEAK. One arm resists the other. There is no genuine zero-equipment biceps curl, and
+  # ? load here is unmeasurable, so double progression cannot track it -- it will sit at
+  # ? the bottom of the chain and never progress. Prefer a band or a bag the moment the
+  # ? user has one.
+  weak: true
+
+- slug: bodyweight_self_resisted_lateral_raise
+  name: Self-Resisted Lateral Raise
+  movement_pattern: shoulder_abduction
+  primary_muscles: [side_delts]
+  secondary_muscles: []
+  difficulty: 2
+  unilateral: true
+  # ? WEAK. Same problem as the curl: the side delt needs external resistance and an arm
+  # ? weighs too little. Included so the pattern has a terminal at all, not because it is
+  # ? good programming.
+  weak: true

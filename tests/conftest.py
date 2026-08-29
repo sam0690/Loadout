@@ -45,13 +45,12 @@ def pytest_sessionstart() -> None:
     from ingest.edges import load_edges
     from ingest.equipment import load as load_equipment
     from ingest.equipment import read_seed
+    from ingest.load import full_catalog
     from ingest.load import load as load_exercises
-    from ingest.normalize import run as normalize_run
 
     engine = sa.create_engine(DATABASE_URL)
-    chosen, _ = normalize_run()
     with engine.begin() as conn:
         load_equipment(conn, read_seed())
-        load_exercises(conn, chosen)
+        load_exercises(conn, full_catalog())
         load_edges(conn, EDGE_SEED)
     engine.dispose()

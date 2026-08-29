@@ -408,3 +408,41 @@ training_context_loads (
 ```
 
 A row with both columns null asserts nothing and is a mistake, so a CHECK rejects it.
+
+## D22 — Hand-authored bodyweight terminals — APPLIED
+
+D12 recorded that seven movement patterns had no zero-equipment terminal, so a user with
+nothing got `NoSubstituteFound` for `calf_raise`, `elbow_flexion`, `horizontal_pull`,
+`knee_extension`, `lunge`, `shoulder_abduction` and `vertical_press` — half the catalog,
+in exactly the minimal-equipment case PRD §1 calls the sharpest differentiator against
+Fitbod. Closed two ways.
+
+**Two were ingest bugs, not missing data.** `ingest/taxonomy.py` matched name keywords
+most-specific-first, and two pairs were in the wrong order: "Handstand Push-Ups" hit
+`push-up` and became a `horizontal_press` before ever reaching the vertical rule, and
+"Step-up with Knee Raise" hit `knee raise` and became `core_anti_extension`. The second
+was caught by the pattern/muscle consistency gate and sent to review; the first was not,
+because front delts are plausible for a horizontal press too. Both rules moved.
+
+**The rest are authored, in `seeds/exercise_terminals.yaml`.** free-exercise-db has no
+bodyweight calf raise, no sissy squat and no pike push-up — only stretches with those
+words in the name. Nine entries, loaded beside the ingested catalog rather than inside
+it, since they are not derived from any source. `ingest.load.full_catalog()` is the one
+definition of what the catalog contains, because the loader converges on exactly that set
+and anything left out of it gets deleted.
+
+**Three of the nine are compromises and say so in the file.** A horizontal pull needs
+something to pull on, and a side delt needs external resistance; lying prone and lifting
+the arms, or resisting one arm with the other, trains the right muscle with the wrong
+stimulus. `bodyweight_self_resisted_curl` in particular cannot progress under double
+progression at all, because its load is unmeasurable — it will sit at the bottom of its
+chain forever. They are terminals so the pattern has one, not because they are good
+programming.
+
+**The real fix, not done here.** The catalog models equipment a user owns and has no way
+to say "a doorway", "a table" or "a sturdy chair", which is what an inverted row and a
+Bulgarian split squat actually need. Modelling household objects as equipment would close
+these properly and is worth considering before the Phase 2 launch, since the launch cohort
+is precisely the people who have a table and no gym.
+
+89 exercises, 216 edges, every pattern reaching a terminal from every node.

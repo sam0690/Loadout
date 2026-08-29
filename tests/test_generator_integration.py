@@ -18,8 +18,8 @@ from engine.graph import Edge, Graph, Node, NoSubstituteFound, Reason, find_subs
 from engine.progression.volume import Landmark
 from ingest.edges import SEED as EDGE_SEED
 from ingest.edges import load_edges
+from ingest.load import full_catalog
 from ingest.load import load as load_exercises
-from ingest.normalize import run as normalize_run
 from schema import exercises, muscle_groups
 
 QUERY = (Path(__file__).resolve().parent.parent / "queries" / "substitutes.sql").read_text()
@@ -36,9 +36,8 @@ def live() -> tuple[list[Candidate], dict[str, Landmark], sa.Engine]:
     to establish it, not assume it.
     """
     engine = sa.create_engine(DATABASE_URL)
-    chosen, _ = normalize_run()
     with engine.begin() as c:
-        load_exercises(c, chosen)
+        load_exercises(c, full_catalog())
         load_edges(c, EDGE_SEED)
     with engine.connect() as c:
         rows = c.execute(

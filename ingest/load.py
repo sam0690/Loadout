@@ -17,6 +17,7 @@ from sqlalchemy.dialects.postgresql import insert
 from db import DATABASE_URL
 from ingest.equipment import resolve_slug
 from ingest.normalize import NORMALIZED, Exercise
+from ingest.terminals import read_terminals
 from schema import exercises
 
 NAMESPACE = uuid.UUID("6f1a37e2-2c1e-5f8e-9d3b-000000000002")
@@ -57,12 +58,21 @@ def load(conn: sa.Connection, rows: list[Exercise]) -> None:
         )
 
 
+def full_catalog() -> list[Exercise]:
+    """Everything the catalog contains: ingested plus hand-authored.
+
+    One definition, because the loader converges on exactly this set and anything left
+    out of it gets deleted.
+    """
+    return [Exercise(**d) for d in json.loads(NORMALIZED.read_text())] + read_terminals()
+
+
 def main() -> None:
-    rows = [Exercise(**d) for d in json.loads(NORMALIZED.read_text())]
+    rows = full_catalog()
     engine = sa.create_engine(DATABASE_URL)
     with engine.begin() as conn:
         load(conn, rows)
-    print(f"loaded {len(rows)} exercises")
+    print(f"loaded {len(rows)} exercises ({len(read_terminals())} hand-authored)")
 
 
 if __name__ == "__main__":

@@ -9,18 +9,7 @@
 # Lines marked `# ?` are the generator's doubts. They are the point of this file:
 # correct or delete them rather than trusting them.
 #
-# 196 edges over 80 exercises.
-#
-# PATTERNS WITH NO ZERO-EQUIPMENT TERMINAL (D12). The catalog has no
-# bodyweight option for these, so a user with no equipment cannot be given
-# one. Hand-authoring a terminal for each is the fix:
-#   - calf_raise
-#   - elbow_flexion
-#   - horizontal_pull
-#   - knee_extension
-#   - lunge
-#   - shoulder_abduction
-#   - vertical_press
+# 216 edges over 89 exercises.
 
 
 # --- from 3_4_sit_up
@@ -39,6 +28,10 @@
 
 # --- from alternate_hammer_curl
 - from: alternate_hammer_curl
+  to: bodyweight_self_resisted_curl
+  type: equipment_downgrade
+  delta: -1
+- from: alternate_hammer_curl
   to: alternate_incline_dumbbell_curl
   type: lateral_equivalent
   delta: 0
@@ -51,6 +44,10 @@
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
 # --- from alternate_incline_dumbbell_curl
+- from: alternate_incline_dumbbell_curl
+  to: bodyweight_self_resisted_curl
+  type: equipment_downgrade
+  delta: -1
 - from: alternate_incline_dumbbell_curl
   to: alternate_hammer_curl
   type: lateral_equivalent
@@ -73,12 +70,6 @@
   type: equipment_downgrade
   delta: 2
   # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
-- from: alternating_cable_shoulder_press
-  to: cable_shoulder_press
-  type: lateral_equivalent
-  delta: 0
-  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
-  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
 # --- from alternating_floor_press
 - from: alternating_floor_press
@@ -271,11 +262,6 @@
   delta: 0
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 - from: barbell_side_split_squat
-  to: dumbbell_rear_lunge
-  type: equipment_downgrade
-  delta: 2
-  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
-- from: barbell_side_split_squat
   to: split_squat_with_dumbbells
   type: equipment_downgrade
   delta: 0
@@ -300,11 +286,6 @@
   type: equipment_downgrade
   delta: 0
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
-- from: barbell_walking_lunge
-  to: dumbbell_rear_lunge
-  type: equipment_downgrade
-  delta: 2
-  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
 - from: barbell_walking_lunge
   to: split_squat_with_dumbbells
   type: equipment_downgrade
@@ -373,6 +354,10 @@
 
 # --- from bent_over_dumbbell_rear_delt_raise_with_head_on_bench
 - from: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  to: bodyweight_prone_ytw_raise
+  type: equipment_downgrade
+  delta: -1
+- from: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
   to: bent_over_two_dumbbell_row
   type: lateral_equivalent
   delta: 0
@@ -428,6 +413,10 @@
 
 # --- from bent_over_two_dumbbell_row
 - from: bent_over_two_dumbbell_row
+  to: bodyweight_prone_ytw_raise
+  type: equipment_downgrade
+  delta: -1
+- from: bent_over_two_dumbbell_row
   to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
   type: lateral_equivalent
   delta: 0
@@ -442,6 +431,10 @@
 
 # --- from bent_over_two_dumbbell_row_with_palms_in
 - from: bent_over_two_dumbbell_row_with_palms_in
+  to: bodyweight_prone_ytw_raise
+  type: equipment_downgrade
+  delta: -1
+- from: bent_over_two_dumbbell_row_with_palms_in
   to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
   type: lateral_equivalent
   delta: 0
@@ -454,9 +447,39 @@
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
+# --- from bodyweight_bulgarian_split_squat
+- from: bodyweight_bulgarian_split_squat
+  to: step_up_with_knee_raise
+  type: difficulty_step
+  delta: -2
+
+# --- from bodyweight_lunge
+- from: bodyweight_lunge
+  to: step_up_with_knee_raise
+  type: difficulty_step
+  delta: 1
+
+# --- from bodyweight_pike_push_up
+- from: bodyweight_pike_push_up
+  to: handstand_push_ups
+  type: difficulty_step
+  delta: 4
+
+# --- from bodyweight_single_leg_calf_raise
+- from: bodyweight_single_leg_calf_raise
+  to: bodyweight_standing_calf_raise
+  type: difficulty_step
+  delta: -2
+
 # --- from bodyweight_squat
 - from: bodyweight_squat
   to: freehand_jump_squat
+  type: difficulty_step
+  delta: 2
+
+# --- from bodyweight_standing_calf_raise
+- from: bodyweight_standing_calf_raise
+  to: bodyweight_single_leg_calf_raise
   type: difficulty_step
   delta: 2
 
@@ -637,24 +660,6 @@
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
-# --- from cable_shoulder_press
-- from: cable_shoulder_press
-  to: double_kettlebell_push_press
-  type: equipment_downgrade
-  delta: 2
-  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
-- from: cable_shoulder_press
-  to: dumbbell_one_arm_shoulder_press
-  type: equipment_downgrade
-  delta: 2
-  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
-- from: cable_shoulder_press
-  to: alternating_cable_shoulder_press
-  type: lateral_equivalent
-  delta: 0
-  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
-  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
-
 # --- from calf_raise_on_a_dumbbell
 - from: calf_raise_on_a_dumbbell
   to: calf_raises_with_bands
@@ -666,6 +671,17 @@
   delta: 0
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from calf_raises_with_bands
+- from: calf_raises_with_bands
+  to: bodyweight_single_leg_calf_raise
+  type: equipment_downgrade
+  delta: 1
+  # ? downgrade is not easier (d3 -> d4); difficulty is seeded from the source's `level` and is coarse
+- from: calf_raises_with_bands
+  to: bodyweight_standing_calf_raise
+  type: equipment_downgrade
+  delta: -1
 
 # --- from chin_up
 - from: chin_up
@@ -717,6 +733,10 @@
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
 # --- from concentration_curls
+- from: concentration_curls
+  to: bodyweight_self_resisted_curl
+  type: equipment_downgrade
+  delta: -1
 - from: concentration_curls
   to: alternate_hammer_curl
   type: lateral_equivalent
@@ -804,6 +824,20 @@
 
 # --- from dumbbell_lunges
 - from: dumbbell_lunges
+  to: bodyweight_bulgarian_split_squat
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: dumbbell_lunges
+  to: bodyweight_lunge
+  type: equipment_downgrade
+  delta: -1
+- from: dumbbell_lunges
+  to: step_up_with_knee_raise
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: dumbbell_lunges
   to: split_squat_with_dumbbells
   type: lateral_equivalent
   delta: 0
@@ -820,12 +854,6 @@
   type: lateral_equivalent
   delta: 0
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
-
-# --- from dumbbell_rear_lunge
-- from: dumbbell_rear_lunge
-  to: split_squat_with_dumbbells
-  type: difficulty_step
-  delta: -2
 
 # --- from dumbbell_seated_one_leg_calf_raise
 - from: dumbbell_seated_one_leg_calf_raise
@@ -867,6 +895,12 @@
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
+# --- from handstand_push_ups
+- from: handstand_push_ups
+  to: bodyweight_pike_push_up
+  type: difficulty_step
+  delta: -4
+
 # --- from kneeling_cable_crunch_with_alternating_oblique_twists
 - from: kneeling_cable_crunch_with_alternating_oblique_twists
   to: decline_oblique_crunch
@@ -898,6 +932,10 @@
 
 # --- from lateral_raise_with_bands
 - from: lateral_raise_with_bands
+  to: bodyweight_self_resisted_lateral_raise
+  type: equipment_downgrade
+  delta: -1
+- from: lateral_raise_with_bands
   to: upright_row_with_bands
   type: lateral_equivalent
   delta: 0
@@ -905,6 +943,12 @@
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
 # --- from leg_extensions
+- from: leg_extensions
+  to: bodyweight_sissy_squat
+  type: equipment_downgrade
+  delta: 1
+  # ? crosses is_fixed_path: a machine and a free weight are not the same strength, so D15 seeds rather than carries
+  # ? downgrade is not easier (d3 -> d4); difficulty is seeded from the source's `level` and is coarse
 - from: leg_extensions
   to: single_leg_leg_extension
   type: lateral_equivalent
@@ -1102,6 +1146,18 @@
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
+# --- from shoulder_press_with_bands
+- from: shoulder_press_with_bands
+  to: bodyweight_pike_push_up
+  type: equipment_downgrade
+  delta: 1
+  # ? downgrade is not easier (d3 -> d4); difficulty is seeded from the source's `level` and is coarse
+- from: shoulder_press_with_bands
+  to: handstand_push_ups
+  type: equipment_downgrade
+  delta: 5
+  # ? downgrade is not easier (d3 -> d8); difficulty is seeded from the source's `level` and is coarse
+
 # --- from single_leg_glute_bridge
 - from: single_leg_glute_bridge
   to: glute_kickback
@@ -1112,6 +1168,12 @@
 
 # --- from single_leg_leg_extension
 - from: single_leg_leg_extension
+  to: bodyweight_sissy_squat
+  type: equipment_downgrade
+  delta: 1
+  # ? crosses is_fixed_path: a machine and a free weight are not the same strength, so D15 seeds rather than carries
+  # ? downgrade is not easier (d3 -> d4); difficulty is seeded from the source's `level` and is coarse
+- from: single_leg_leg_extension
   to: leg_extensions
   type: lateral_equivalent
   delta: 0
@@ -1120,9 +1182,19 @@
 
 # --- from split_squat_with_dumbbells
 - from: split_squat_with_dumbbells
-  to: dumbbell_rear_lunge
-  type: difficulty_step
+  to: bodyweight_bulgarian_split_squat
+  type: equipment_downgrade
   delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: split_squat_with_dumbbells
+  to: bodyweight_lunge
+  type: equipment_downgrade
+  delta: -1
+- from: split_squat_with_dumbbells
+  to: step_up_with_knee_raise
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 - from: split_squat_with_dumbbells
   to: dumbbell_lunges
   type: lateral_equivalent
@@ -1178,6 +1250,16 @@
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
+# --- from step_up_with_knee_raise
+- from: step_up_with_knee_raise
+  to: bodyweight_bulgarian_split_squat
+  type: difficulty_step
+  delta: 2
+- from: step_up_with_knee_raise
+  to: bodyweight_lunge
+  type: difficulty_step
+  delta: -1
+
 # --- from stiff_leg_barbell_good_morning
 - from: stiff_leg_barbell_good_morning
   to: stiff_legged_dumbbell_deadlift
@@ -1198,6 +1280,10 @@
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 
 # --- from upright_row_with_bands
+- from: upright_row_with_bands
+  to: bodyweight_self_resisted_lateral_raise
+  type: equipment_downgrade
+  delta: -1
 - from: upright_row_with_bands
   to: lateral_raise_with_bands
   type: lateral_equivalent
