@@ -62,6 +62,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contexts/archetypes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Archetypes
+         * @description The presets onboarding offers.
+         *
+         *     Unauthenticated on purpose: this is catalog data, and asking someone to sign in
+         *     before they can see what the app even supports is friction for nothing (PRD §12).
+         *     Ordered by size, so the leanest kit reads first — that is the launch cohort.
+         */
+        get: operations["list_archetypes_contexts_archetypes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contexts": {
         parameters: {
             query?: never;
@@ -179,6 +203,15 @@ export interface components {
             stored: number;
             /** Projected */
             projected: number;
+        };
+        /** ArchetypeOut */
+        ArchetypeOut: {
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
+            /** Equipment */
+            equipment: string[];
         };
         /** Batch */
         Batch: {
@@ -496,6 +529,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    list_archetypes_contexts_archetypes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArchetypeOut"][];
                 };
             };
         };

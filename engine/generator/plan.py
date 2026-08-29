@@ -59,6 +59,20 @@ class Candidate:
 
 
 @dataclass(frozen=True)
+class Substitute:
+    """A fallback, carrying enough to render it with no network.
+
+    Bare ids would be useless offline: the client cannot show "swap to X" for a uuid it
+    has no name for, and looking the name up is exactly the request §6 says will not
+    succeed mid-set.
+    """
+
+    exercise_id: uuid.UUID
+    slug: str
+    equipment: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class PlanItem:
     exercise_id: uuid.UUID
     slug: str
@@ -70,7 +84,7 @@ class PlanItem:
     load: Decimal | None
     # Resolved at generation and shipped with the plan, never fetched on demand: the
     # occupied-machine swap happens mid-set in a gym basement with no signal (PRD §6).
-    substitutes: tuple[uuid.UUID, ...]
+    substitutes: tuple[Substitute, ...]
 
 
 @dataclass(frozen=True)
@@ -114,7 +128,7 @@ def generate_plan(
     time_budget_minutes: int,
     experience: Experience = Experience.INTERMEDIATE,
     goal: Goal = Goal.HYPERTROPHY,
-    substitutes_for: Callable[[uuid.UUID], tuple[uuid.UUID, ...]] | None = None,
+    substitutes_for: Callable[[uuid.UUID], tuple[Substitute, ...]] | None = None,
     previous_loads: Mapping[uuid.UUID, Decimal] | None = None,
     can_express_load: Callable[[Candidate], bool] | None = None,
     swap_penalty: Callable[[uuid.UUID], float] | None = None,

@@ -535,3 +535,34 @@ session count. Monday/Wednesday/Friday and Monday/Tuesday/Wednesday are not the 
 **Job ownership.** The caller is recorded in the RQ job's metadata and checked on every
 poll. A job id is guessable enough that `GET /jobs/{id}` must not leak another user's
 plan; like a context, someone else's job is 404 rather than 403.
+
+## D26 — Shipped substitutes carry a name, not just an id — APPLIED
+
+`PlanItem.substitutes` was a tuple of bare uuids. That is useless where it is actually
+used: the occupied-machine swap happens mid-set in a basement with no signal (§6), and a
+client cannot render "swap to X" for a uuid it has no name for. Looking the name up is
+exactly the request §6 says will not succeed.
+
+Each substitute now carries `exercise_id`, `slug` and `equipment` — enough to show the
+option and what it needs, resolved at generation and shipped inside the plan.
+
+This is what makes 2.5's occupied-equipment flow work offline, and it is verified that
+way: an end-to-end test takes a real plan, goes offline, taps "in use", and asserts the
+swap resolves locally with no request.
+
+## D27 — Gym archetypes are seeded data, and the API serves them unauthenticated — APPLIED
+
+`gym_archetypes` has existed since Phase 0 and had never held a row, which is also why
+D12's reference to a `minimal_apartment` archetype dangled. Six presets now live in
+`seeds/gym_archetypes.yaml`, loaded by the same converge-don't-append rule as equipment,
+with every slug resolved through the alias table so a typo fails the seed rather than
+quietly producing a thinner gym than the user has.
+
+`GET /contexts/archetypes` is deliberately unauthenticated. It is catalog data, and
+requiring a login before someone can see what the app supports is friction for nothing —
+PRD §12 already names onboarding friction as a real cost. Presets are ordered leanest
+first, because the launch cohort is the minimal-equipment user and they should not have to
+scroll past a commercial gym to find their apartment.
+
+Onboarding now picks an archetype rather than a hardcoded list, which is the "one question
+instead of two hundred" §7 describes. Amendments stay a later, optional step.

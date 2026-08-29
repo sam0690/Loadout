@@ -11,13 +11,7 @@ import { ApiError, api, setToken } from "@/lib/api/client";
  * rough equipment set, then generates. Everything else -- the rack, the bar weight, the
  * archetype amendments -- has a working default and can be corrected later (D21).
  */
-const PRESETS: { label: string; equipment: string[] }[] = [
-  { label: "Nothing at all", equipment: [] },
-  { label: "Dumbbells", equipment: ["dumbbells"] },
-  { label: "Dumbbells + bench + pull-up bar", equipment: ["dumbbells", "flat_bench", "pull_up_bar"] },
-  { label: "Barbell home gym", equipment: ["barbell", "plates", "adjustable_bench", "pull_up_bar", "dumbbells"] },
-  { label: "Commercial gym", equipment: ["barbell", "plates", "dumbbells", "cable_stack", "adjustable_bench", "pull_up_bar", "leg_press", "lat_pulldown"] },
-];
+type Archetype = { slug: string; name: string; equipment: string[] };
 
 export default function Onboarding() {
   const router = useRouter();
@@ -25,13 +19,16 @@ export default function Onboarding() {
   const [sent, setSent] = useState(false);
   const [linkToken, setLinkToken] = useState("");
   const [authed, setAuthed] = useState(false);
-  const [chosen, setChosen] = useState<number | null>(null);
+  const [archetypes, setArchetypes] = useState<Archetype[]>([]);
+  const [chosen, setChosen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // A verify link opened on this device carries the token in the query string.
     const fromLink = new URLSearchParams(window.location.search).get("token");
     if (fromLink) setLinkToken(fromLink);
+    // Unauthenticated, so the presets can be shown before anyone signs in.
+    void api.archetypes().then(setArchetypes).catch(() => setArchetypes([]));
   }, []);
 
   async function send() {
@@ -59,10 +56,13 @@ export default function Onboarding() {
     if (chosen === null) return;
     setError(null);
     try {
-      const preset = PRESETS[chosen]!;
+      const preset = archetypes.find((a) => a.slug === chosen)!;
+      // The archetype is the base; amendments come later from the context screen. One
+      // question instead of two hundred (PRD §7).
       await api.createContext({
-        label: preset.label,
-        equipment_added: preset.equipment,
+        label: preset.name,
+        archetype_slug: preset.slug,
+        equipment_added: [],
         equipment_removed: [],
         is_default: true,
         loads: {},
@@ -119,16 +119,19 @@ export default function Onboarding() {
 
       {authed && (
         <section className="space-y-3">
-          <h2 className="text-lg">What do you have?</h2>
-          {PRESETS.map((preset, i) => (
+          <h2 className="text-lg">Where do you train?</h2>
+          {archetypes.map((preset) => (
             <button
-              key={preset.label}
-              onClick={() => setChosen(i)}
-              className={`w-full rounded-2xl px-4 text-left ${
-                chosen === i ? "bg-emerald-500 text-black" : "bg-white/10"
+              key={preset.slug}
+              onClick={() => setChosen(preset.slug)}
+              className={`w-full rounded-2xl px-4 py-4 text-left ${
+                chosen === preset.slug ? "bg-emerald-500 text-black" : "bg-white/10"
               }`}
             >
-              {preset.label}
+              <span className="block">{preset.name}</span>
+              <span className="block text-xs opacity-60">
+                {preset.equipment.length} pieces of kit
+              </span>
             </button>
           ))}
           <button

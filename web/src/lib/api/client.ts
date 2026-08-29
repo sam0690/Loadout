@@ -28,7 +28,7 @@ export type PlanPayload = {
       target_reps: number;
       target_rir: number;
       load: string | null;
-      substitutes: string[];
+      substitutes: { exercise_id: string; slug: string; equipment: string[] }[];
     }[];
   }[];
 };
@@ -85,6 +85,11 @@ export const api = {
   me: () => request<{ id: string; email: string }>("/auth/me"),
 
   listContexts: () => request<ContextOut[]>("/contexts"),
+
+  archetypes: () =>
+    request<{ slug: string; name: string; equipment: string[] }[]>(
+      "/contexts/archetypes",
+    ),
 
   createContext: (body: ContextIn) =>
     request<ContextOut>("/contexts", { method: "POST", body: JSON.stringify(body) }),

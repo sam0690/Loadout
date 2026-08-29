@@ -224,3 +224,48 @@ def test_replacing_a_context_replaces_its_loads_too(client: TestClient) -> None:
     assert updated.json()["label"] == "renamed"
     dumbbells = next(e for e in updated.json()["equipment"] if e["slug"] == "dumbbells")
     assert len(dumbbells["load_increments"]) > 2, "the override was dropped, catalog stands"
+
+
+# --- archetypes ---------------------------------------------------------------
+
+
+def test_archetypes_are_listed_without_signing_in() -> None:
+    """Catalog data. Asking for a login to see what the app supports is friction for
+    nothing (PRD §12)."""
+    got = TestClient(app).get("/contexts/archetypes")
+    assert got.status_code == 200, got.text
+    slugs = [a["slug"] for a in got.json()]
+    assert "minimal_apartment" in slugs
+    assert "commercial_chain" in slugs
+
+
+def test_archetypes_read_leanest_first(client: TestClient) -> None:
+    """The launch cohort is the minimal-equipment user, so they should not scroll."""
+    sizes = [len(a["equipment"]) for a in client.get("/contexts/archetypes").json()]
+    assert sizes == sorted(sizes)
+
+
+def test_an_archetype_expands_into_real_equipment(client: TestClient) -> None:
+    archetypes = {a["slug"]: a for a in client.get("/contexts/archetypes").json()}
+    assert "pull_up_bar" in archetypes["minimal_apartment"]["equipment"]
+    assert "hack_squat" in archetypes["commercial_chain"]["equipment"]
+
+
+def test_a_context_built_from_an_archetype_resolves_its_preset(client: TestClient) -> None:
+    """D10's merge: the preset is the base, amendments are applied on top."""
+    got = client.post(
+        "/contexts",
+        json={
+            "label": "my gym",
+            "archetype_slug": "hotel",
+            "equipment_added": ["kettlebell"],
+            "equipment_removed": ["cable_stack"],
+            "is_default": True,
+            "loads": {},
+        },
+    )
+    assert got.status_code == 201, got.text
+    slugs = {e["slug"] for e in got.json()["equipment"]}
+    assert "dumbbells" in slugs, "from the preset"
+    assert "kettlebell" in slugs, "added"
+    assert "cable_stack" not in slugs, "removed wins over the preset"

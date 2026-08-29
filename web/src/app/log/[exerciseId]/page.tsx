@@ -26,6 +26,7 @@ export default function Logger({
   const [reps, setReps] = useState(10);
   const [rir, setRir] = useState(2);
   const [done, setDone] = useState<number[]>([]);
+  const [swapping, setSwapping] = useState(false);
 
   useEffect(() => {
     const raw = window.localStorage.getItem("loadout.plan");
@@ -44,6 +45,24 @@ export default function Logger({
       setDone(events.map((e) => Number(e.payload.reps))),
     );
   }, [exerciseId]);
+
+  /**
+   * The occupied-machine flow (PRD §6), and the reason substitutes travel with the plan.
+   *
+   * Everything needed is already on the device: the alternatives, their names and their
+   * equipment. No request is made, because this happens mid-set in a basement. The swap
+   * is recorded as an event with reason "unavailable_now", which is a different signal
+   * from disliking an exercise and must not be conflated with one.
+   */
+  async function swapTo(substitute: { exercise_id: string; slug: string }) {
+    if (!item) return;
+    await enqueue("exercise_swapped", {
+      from_exercise_id: item.exercise_id,
+      to_exercise_id: substitute.exercise_id,
+      reason: "unavailable_now",
+    });
+    router.replace(`/log/${substitute.exercise_id}`);
+  }
 
   async function logSet() {
     if (!item) return;
@@ -94,6 +113,43 @@ export default function Logger({
         >
           Log set {done.length + 1}
         </button>
+        {!swapping && (
+          <button
+            onClick={() => setSwapping(true)}
+            disabled={item.substitutes.length === 0}
+            className="w-full rounded-2xl border border-white/15 text-white/70 disabled:opacity-30"
+          >
+            {item.substitutes.length ? "In use — swap" : "No alternative on this device"}
+          </button>
+        )}
+
+        {swapping && (
+          // Inline, not a modal: a dialog needing a precise tap to dismiss is a trap
+          // when the user is holding a dumbbell.
+          <div className="space-y-2">
+            {item.substitutes.map((substitute) => (
+              <button
+                key={substitute.exercise_id}
+                onClick={() => swapTo(substitute)}
+                className="w-full rounded-2xl bg-white/10 px-4 py-4 text-left capitalize"
+              >
+                <span className="block">{substitute.slug.replaceAll("_", " ")}</span>
+                <span className="block text-xs opacity-50">
+                  {substitute.equipment.length
+                    ? substitute.equipment.join(", ").replaceAll("_", " ")
+                    : "no equipment"}
+                </span>
+              </button>
+            ))}
+            <button
+              onClick={() => setSwapping(false)}
+              className="w-full rounded-2xl border border-white/15 text-white/50"
+            >
+              Keep this one
+            </button>
+          </div>
+        )}
+
         <button
           onClick={() => router.push("/plan")}
           className="w-full rounded-2xl border border-white/15 text-white/70"

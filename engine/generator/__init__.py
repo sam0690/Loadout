@@ -5,6 +5,7 @@ from engine.generator.plan import (
     Plan,
     PlanItem,
     Session,
+    Substitute,
     generate_plan,
     target_sets,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "Plan",
     "PlanItem",
     "Session",
+    "Substitute",
     "generate_plan",
     "target_sets",
 ]

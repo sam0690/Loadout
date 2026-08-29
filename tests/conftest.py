@@ -39,6 +39,8 @@ def seed_catalog() -> None:
     exercises (the loader resolves every slug through the alias table), exercises for
     edges, and edges for anything that traverses the graph.
     """
+    from ingest.archetypes import load as load_archetypes
+    from ingest.archetypes import read_seed as read_archetype_seed
     from ingest.edges import SEED as EDGE_SEED
     from ingest.edges import load_edges
     from ingest.equipment import load as load_equipment
@@ -51,6 +53,7 @@ def seed_catalog() -> None:
         load_equipment(conn, read_seed())
         load_exercises(conn, full_catalog())
         load_edges(conn, EDGE_SEED)
+        load_archetypes(conn, read_archetype_seed())
     engine.dispose()
 
 

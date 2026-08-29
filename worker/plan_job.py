@@ -21,7 +21,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from db import DATABASE_URL
 from engine import ENGINE_VERSION
-from engine.generator import Candidate, Experience, Goal, Plan, generate_plan
+from engine.generator import Candidate, Experience, Goal, Plan, Substitute, generate_plan
 from engine.graph import Edge, Graph, Node, NoSubstituteFound, Reason, find_substitutes
 from engine.progression.primitives import EquipmentLoads, expressible_loads
 from engine.progression.volume import Landmark
@@ -63,7 +63,7 @@ def _context_equipment(
 
 def _substitutes(
     conn: sa.Connection, exercise_id: uuid.UUID, available: frozenset[str]
-) -> tuple[uuid.UUID, ...]:
+) -> tuple[Substitute, ...]:
     got = conn.execute(
         sa.text(SUBSTITUTES), {"exercise_id": exercise_id, "max_depth": 3}
     ).all()
@@ -86,7 +86,14 @@ def _substitutes(
         # A pattern with no reachable alternative is a catalog gap, not a failed plan.
         # The exercise is still prescribable; it just has nothing to fall back to.
         return ()
-    return tuple(c.node.id for c in found)
+    return tuple(
+        Substitute(
+            exercise_id=c.node.id,
+            slug=c.node.slug,
+            equipment=tuple(sorted(c.node.equipment)),
+        )
+        for c in found
+    )
 
 
 def build_plan(

@@ -283,3 +283,22 @@ def test_the_openapi_schema_is_clean() -> None:
     walk(schema["paths"])
     walk(schema.get("components", {}))
     assert referenced <= defined, f"dangling refs: {referenced - defined}"
+
+
+def test_a_shipped_substitute_carries_enough_to_render_offline(client: TestClient) -> None:
+    """PRD §6: the swap happens mid-set with no signal.
+
+    A bare id would be useless there — the client cannot show "swap to X" for a uuid it
+    has no name for, and looking it up is exactly the request that will not succeed.
+    """
+    context_id = make_context(client)
+    request_plan(client, context_id)
+    payload = client.get("/plans/current").json()["payload"]
+    shipped = [
+        s for sess in payload["sessions"] for i in sess["items"] for s in i["substitutes"]
+    ]
+    assert shipped, "the seeded graph should give some exercises a fallback"
+    for substitute in shipped:
+        assert substitute["slug"], "a name, not just an id"
+        assert "equipment" in substitute, "so the user can see what it needs"
+        assert isinstance(substitute["equipment"], list)

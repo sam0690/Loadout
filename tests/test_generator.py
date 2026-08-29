@@ -226,7 +226,9 @@ def test_a_loadable_exercise_is_preferred_when_the_context_can_load_it() -> None
 
 def test_substitutes_are_shipped_with_the_plan() -> None:
     """PRD §6: resolved at generation, because the swap happens with no signal."""
-    subs = (uuid.UUID(int=99),)
+    from engine.generator import Substitute
+
+    subs = (Substitute(uuid.UUID(int=99), "alt_exercise", ("dumbbells",)),)
     plan = generate_plan(
         days=[MONDAY], catalog=full_catalog(), available_equipment=frozenset(),
         landmarks=LANDMARKS, time_budget_minutes=60,

@@ -13,7 +13,7 @@ import pytest
 import sqlalchemy as sa
 
 from db import DATABASE_URL
-from engine.generator import Candidate, Experience, Goal, generate_plan
+from engine.generator import Candidate, Experience, Goal, Substitute, generate_plan
 from engine.graph import Edge, Graph, Node, NoSubstituteFound, Reason, find_substitutes
 from engine.progression.volume import Landmark
 from ingest.edges import SEED as EDGE_SEED
@@ -66,7 +66,7 @@ def live() -> tuple[list[Candidate], dict[str, Landmark], sa.Engine]:
 
 
 def substitutes_via_graph(engine: sa.Engine) -> object:
-    def resolve(exercise_id: uuid.UUID) -> tuple[uuid.UUID, ...]:
+    def resolve(exercise_id: uuid.UUID) -> tuple[Substitute, ...]:
         with engine.connect() as c:
             got = c.execute(sa.text(QUERY), {"exercise_id": exercise_id, "max_depth": 3}).all()
         nodes = [
@@ -84,7 +84,10 @@ def substitutes_via_graph(engine: sa.Engine) -> object:
             )
         except NoSubstituteFound:
             return ()
-        return tuple(c.node.id for c in found)
+        return tuple(
+            Substitute(c.node.id, c.node.slug, tuple(sorted(c.node.equipment)))
+            for c in found
+        )
 
     return resolve
 
@@ -120,15 +123,18 @@ def test_every_shipped_substitute_is_valid_for_the_same_pattern(
         available_equipment=HOME, landmarks=landmarks, time_budget_minutes=60,
         substitutes_for=substitutes_via_graph(engine),  # type: ignore[arg-type]
     )
-    shipped = 0
+    count = 0
     for session in plan.sessions:
         for item in session.items:
-            for sub_id in item.substitutes:
-                sub = by_id[sub_id]
+            for shipped in item.substitutes:
+                sub = by_id[shipped.exercise_id]
+                # The name travels with the id, so the client can render the swap with
+                # no network (PRD §6).
+                assert shipped.slug == sub.slug
                 assert sub.movement_pattern == item.movement_pattern
                 assert sub.equipment <= HOME
-                shipped += 1
-    assert shipped, "the seeded edges should yield at least some substitutes"
+                count += 1
+    assert count, "the seeded edges should yield at least some substitutes"
 
 
 def test_the_plan_respects_the_real_landmarks(

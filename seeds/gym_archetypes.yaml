@@ -1,0 +1,46 @@
+# Gym archetypes: one question instead of two hundred (PRD §7).
+#
+# You cannot ask a user to enumerate the equipment in their gym, so you ask which kind of
+# room they are standing in and let them amend it. The preset covers perhaps 80% of what
+# is actually there; training_contexts.equipment_added / equipment_removed absorb the rest.
+#
+# Slugs are the six named in PRD §7. Equipment is by slug and is validated on load, so a
+# typo here fails the seed rather than silently producing a thinner gym.
+
+- slug: minimal_apartment
+  name: Apartment, minimal kit
+  # D12 names this archetype as the bound for "every pattern reaches a terminal". It is
+  # the leanest context the generator is expected to produce a real plan for.
+  equipment: [resistance_bands, pull_up_bar, suspension_trainer]
+
+- slug: hotel
+  name: Hotel gym
+  # Light fixed dumbbells, a bench, and usually one cable tower. Rarely a barbell.
+  equipment: [dumbbells, adjustable_bench, cable_stack]
+
+- slug: garage
+  name: Garage gym
+  equipment:
+    [barbell, plates, dumbbells, kettlebell, adjustable_bench, pull_up_bar]
+
+- slug: crossfit_box
+  name: CrossFit box
+  # Barbells and open floor. Machines are the thing a box deliberately does not have.
+  equipment:
+    [barbell, plates, dumbbells, kettlebell, pull_up_bar, suspension_trainer]
+
+- slug: university_rec
+  name: University rec centre
+  # Well equipped but rarely has the specialty plate-loaded machines a chain buys.
+  equipment:
+    [barbell, plates, dumbbells, kettlebell, adjustable_bench, flat_bench, pull_up_bar,
+     cable_stack, smith_machine, lat_pulldown, seated_row_machine, chest_press_machine,
+     leg_press, leg_curl_machine, leg_extension_machine]
+
+- slug: commercial_chain
+  name: Commercial chain gym
+  equipment:
+    [barbell, plates, dumbbells, kettlebell, adjustable_bench, flat_bench, pull_up_bar,
+     suspension_trainer, resistance_bands, cable_stack, smith_machine, lat_pulldown,
+     seated_row_machine, chest_press_machine, pec_deck, leg_press, leg_curl_machine,
+     leg_extension_machine, hack_squat]

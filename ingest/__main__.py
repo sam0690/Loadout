@@ -8,12 +8,13 @@ Each stage also runs on its own; see the module docstrings.
 import sqlalchemy as sa
 
 from db import DATABASE_URL
-from ingest import edges, equipment, fetch, load, normalize
+from ingest import archetypes, edges, equipment, fetch, load, normalize
 
 
 def main() -> None:
     fetch.main()
     equipment.main()
+    archetypes.main()
     normalize.main()
     load.main()
     # Loads the reviewed file; never regenerates it. `uv run python -m ingest.edges

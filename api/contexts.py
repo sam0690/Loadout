@@ -35,6 +35,12 @@ def engine() -> sa.Engine:
     return _engine
 
 
+class ArchetypeOut(BaseModel):
+    slug: str
+    name: str
+    equipment: list[str]
+
+
 class Loads(BaseModel):
     """A context's own answer for one piece of equipment (D21). Absent means the catalog
     default stands, which is not the same as 'not loadable'."""
@@ -175,6 +181,33 @@ def _clear_other_defaults(
     if keep is not None:
         stmt = stmt.where(training_contexts.c.id != keep)
     conn.execute(stmt.values(is_default=False))
+
+
+@router.get("/archetypes")
+def list_archetypes(db: Annotated[sa.Engine, Depends(engine)]) -> list[ArchetypeOut]:
+    """The presets onboarding offers.
+
+    Unauthenticated on purpose: this is catalog data, and asking someone to sign in
+    before they can see what the app even supports is friction for nothing (PRD §12).
+    Ordered by size, so the leanest kit reads first — that is the launch cohort.
+    """
+    with db.connect() as conn:
+        rows = conn.execute(
+            sa.select(gym_archetypes).order_by(
+                sa.func.cardinality(gym_archetypes.c.equipment_ids), gym_archetypes.c.name
+            )
+        ).all()
+        slugs: dict[uuid.UUID, str] = {
+            r.id: r.slug for r in conn.execute(sa.select(equipment.c.id, equipment.c.slug))
+        }
+    return [
+        ArchetypeOut(
+            slug=r.slug,
+            name=r.name,
+            equipment=sorted(slugs[eid] for eid in r.equipment_ids if eid in slugs),
+        )
+        for r in rows
+    ]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
