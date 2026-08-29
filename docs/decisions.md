@@ -487,3 +487,22 @@ wired in. Recorded rather than half-built.
 
 D2's deferred foreign key on `training_contexts.user_id` is also added here, since the
 users table it was waiting for now exists.
+
+## D24 — One default training context per user, enforced by the database — APPLIED
+
+PRD §7 gives `training_contexts.is_default` with nothing saying only one may be set. Two
+defaults is a bug — session start has to pick one — and "clear the old default before
+setting the new one" is two statements that a crash in between leaves half-done, or that
+two concurrent requests interleave.
+
+A partial unique index on `(user_id) WHERE is_default` makes it unrepresentable. The
+handler still demotes the previous default first, but the index is what guarantees it.
+
+Two related rules the API keeps, neither of which the PRD states:
+
+- **The first context a user creates is their default**, whatever the request said. A user
+  holding contexts with no default has no session to start.
+- **Deleting the default promotes another.** Same reason, from the other direction.
+
+Uniqueness is per user, not global — two users each having a default is the normal case,
+which is why the index is on `(user_id)` and not on `is_default` alone.

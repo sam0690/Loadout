@@ -266,3 +266,39 @@ def test_a_session_cannot_write_events_as_another_user(
             sa.select(events.c.user_id).where(events.c.user_id.in_([attacker, victim]))
         ).scalars().all()
     assert owners == [attacker], "the token decides the owner, not the request"
+
+
+def test_unread_links_are_rate_limited_without_changing_the_response(
+    client: TestClient, db: sa.Engine, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The limit must not become the enumeration oracle the endpoint avoids."""
+    from api.auth import MAX_OUTSTANDING_LINKS
+
+    bodies, statuses = [], []
+    with caplog.at_level("INFO", logger="loadout.auth"):
+        for _ in range(MAX_OUTSTANDING_LINKS + 2):
+            got = client.post("/auth/request", json={"email": EMAIL})
+            statuses.append(got.status_code)
+            bodies.append(got.json())
+    assert set(statuses) == {202}, "throttling is invisible from outside"
+    assert len(set(map(str, bodies))) == 1
+
+    with db.connect() as c:
+        issued = c.execute(
+            sa.select(sa.func.count())
+            .select_from(magic_links)
+            .join(users, users.c.id == magic_links.c.user_id)
+            .where(sa.func.lower(users.c.email) == EMAIL)
+        ).scalar_one()
+    assert issued == MAX_OUTSTANDING_LINKS, "no more links than the cap were created"
+
+
+def test_consuming_a_link_frees_the_allowance(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Logging in repeatedly is fine; accumulating unread links is what is capped."""
+    from api.auth import MAX_OUTSTANDING_LINKS
+
+    for _ in range(MAX_OUTSTANDING_LINKS + 3):
+        token = login(client, caplog, EMAIL)
+        assert client.get("/auth/me", headers=auth(token)).status_code == 200

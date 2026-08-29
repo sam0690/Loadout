@@ -32,6 +32,15 @@ LINK_TTL = timedelta(minutes=15)
 # No revocation exists (D23), so the window a leaked token stays usable is exactly this.
 SESSION_TTL = timedelta(days=7)
 BASE_URL = "http://localhost:3000"
+# Unconsumed links outstanding before we stop issuing more. Counted in the database
+# rather than in memory, so it holds across worker processes without new infrastructure.
+# Consumed links do not count: logging in three times in a quarter hour is fine, being
+# mailed three unused links is the thing worth stopping.
+MAX_OUTSTANDING_LINKS = 3
+
+
+# One body for every outcome of /auth/request: new account, known account, throttled.
+ACCEPTED = {"detail": "If that address can receive mail, a link is on its way."}
 
 
 class RequestLink(BaseModel):
@@ -100,9 +109,24 @@ def request_link(body: RequestLink, db: Annotated[sa.Engine, Depends(engine)]) -
         if user_id is None:
             user_id = uuid.uuid4()
             conn.execute(sa.insert(users).values(id=user_id, email=email))
+        outstanding = conn.execute(
+            sa.select(sa.func.count())
+            .select_from(magic_links)
+            .where(
+                magic_links.c.user_id == user_id,
+                magic_links.c.consumed_at.is_(None),
+                magic_links.c.expires_at > datetime.now(UTC),
+            )
+        ).scalar_one()
+        if outstanding >= MAX_OUTSTANDING_LINKS:
+            # Same 202, same body. Answering differently here would turn the rate limit
+            # into the enumeration oracle the endpoint was written to avoid, and would
+            # tell an attacker exactly when their target had unread mail.
+            log.warning("magic_link_throttled user_id=%s", user_id)
+            return ACCEPTED
         token = issue_token(conn, user_id)
     send_link(email, f"{BASE_URL}/auth/verify?token={token}")
-    return {"detail": "If that address can receive mail, a link is on its way."}
+    return ACCEPTED
 
 
 @router.post("/verify")

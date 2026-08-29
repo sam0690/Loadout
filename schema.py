@@ -156,6 +156,13 @@ training_contexts = sa.Table(
     sa.Column("is_default", sa.Boolean, nullable=False),
     # Load a user's contexts at session start.
     sa.Index("ix_training_contexts_user_id", "user_id"),
+    # A user has exactly one default. Enforced here rather than in the handler, because
+    # "clear the old default before setting a new one" is two statements that a crash
+    # between can leave half-done.
+    sa.Index(
+        "uq_training_contexts_one_default", "user_id",
+        unique=True, postgresql_where=sa.text("is_default"),
+    ),
 )
 
 training_context_loads = sa.Table(
