@@ -5,6 +5,8 @@ to review.csv rather than getting a guess — that file is the deliverable of 0.
 0.5's hand-authored edges are built on top of whatever survives review.
 """
 
+from collections.abc import Collection
+
 # free-exercise-db `category`. Everything else is a §3 non-goal: stretching, cardio,
 # plyometrics, strongman and olympic weightlifting are not what this app programs.
 KEEP_CATEGORIES = {"strength", "powerlifting"}
@@ -134,3 +136,23 @@ PATTERN_MUSCLES = {
     "core_anti_extension": {"abs", "spinal_erectors"},
     "core_anti_rotation": {"abs", "spinal_erectors"},
 }
+
+# Equipment tiers, used to build a downgrade chain rather than N copies of the simplest
+# option. Selection spans these within each pattern: a pattern with only bodyweight rows
+# has nothing to downgrade *from*, and one with only machines never reaches a terminal.
+EQUIPMENT_TIERS: list[tuple[int, set[str]]] = [
+    (1, {"resistance_bands", "pull_up_bar", "suspension_trainer"}),
+    (2, {"dumbbells", "kettlebell"}),
+]
+BENCHES = {"flat_bench", "adjustable_bench"}
+
+
+def tier(equipment: Collection[str]) -> int:
+    """0 bodyweight, 1 bands/bar, 2 dumbbell/kettlebell, 3 barbell, machine or cable."""
+    items = set(equipment) - BENCHES
+    if not items:
+        return 0
+    for rank, members in EQUIPMENT_TIERS:
+        if items <= members:
+            return rank
+    return 3

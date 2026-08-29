@@ -27,6 +27,12 @@ def exercise_id(slug: str) -> uuid.UUID:
 
 
 def load(conn: sa.Connection, rows: list[Exercise]) -> None:
+    # Same convergence rule as the equipment loader: rows dropped from the normalized
+    # set are dropped here. Without it a narrowed selection leaves the old catalog
+    # behind and the table grows past what normalize actually chose. Edges cascade.
+    conn.execute(
+        sa.delete(exercises).where(exercises.c.slug.notin_([r.slug for r in rows]))
+    )
     for r in rows:
         row: dict[str, Any] = {
             "id": exercise_id(r.slug),

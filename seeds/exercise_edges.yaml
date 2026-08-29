@@ -1,0 +1,1220 @@
+# Substitution graph edges. GENERATED, then corrected by hand.
+#
+#   uv run python -m ingest.edges --force   # regenerate, discarding corrections
+#   uv run python -m ingest.edges --load    # load this file as it stands
+#
+# delta is difficulty(to) - difficulty(from), signed; lateral edges are 0 by
+# definition (D6) and the database rejects anything else.
+#
+# Lines marked `# ?` are the generator's doubts. They are the point of this file:
+# correct or delete them rather than trusting them.
+#
+# 196 edges over 80 exercises.
+#
+# PATTERNS WITH NO ZERO-EQUIPMENT TERMINAL (D12). The catalog has no
+# bodyweight option for these, so a user with no equipment cannot be given
+# one. Hand-authoring a terminal for each is the fix:
+#   - calf_raise
+#   - elbow_flexion
+#   - horizontal_pull
+#   - knee_extension
+#   - lunge
+#   - shoulder_abduction
+#   - vertical_press
+
+
+# --- from 3_4_sit_up
+- from: 3_4_sit_up
+  to: cross_body_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: 3_4_sit_up
+  to: crunch_hands_overhead
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from alternate_hammer_curl
+- from: alternate_hammer_curl
+  to: alternate_incline_dumbbell_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+- from: alternate_hammer_curl
+  to: concentration_curls
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from alternate_incline_dumbbell_curl
+- from: alternate_incline_dumbbell_curl
+  to: alternate_hammer_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+- from: alternate_incline_dumbbell_curl
+  to: concentration_curls
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from alternating_cable_shoulder_press
+- from: alternating_cable_shoulder_press
+  to: double_kettlebell_push_press
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: alternating_cable_shoulder_press
+  to: dumbbell_one_arm_shoulder_press
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: alternating_cable_shoulder_press
+  to: cable_shoulder_press
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from alternating_floor_press
+- from: alternating_floor_press
+  to: back_flyes_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: alternating_floor_press
+  to: bench_press_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from back_flyes_with_bands
+- from: back_flyes_with_bands
+  to: bench_dips
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: back_flyes_with_bands
+  to: dips_triceps_version
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: back_flyes_with_bands
+  to: bench_press_with_bands
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from band_good_morning
+- from: band_good_morning
+  to: glute_kickback
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: band_good_morning
+  to: single_leg_glute_bridge
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: band_good_morning
+  to: band_good_morning_pull_through
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from band_good_morning_pull_through
+- from: band_good_morning_pull_through
+  to: glute_kickback
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: band_good_morning_pull_through
+  to: single_leg_glute_bridge
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: band_good_morning_pull_through
+  to: band_good_morning
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from band_skull_crusher
+- from: band_skull_crusher
+  to: standing_towel_triceps_extension
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from barbell_bench_press_medium_grip
+- from: barbell_bench_press_medium_grip
+  to: alternating_floor_press
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from barbell_curl
+- from: barbell_curl
+  to: alternate_hammer_curl
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_curl
+  to: alternate_incline_dumbbell_curl
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_curl
+  to: concentration_curls
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_curl
+  to: barbell_curls_lying_against_an_incline
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+- from: barbell_curl
+  to: cable_hammer_curls_rope_attachment
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from barbell_curls_lying_against_an_incline
+- from: barbell_curls_lying_against_an_incline
+  to: alternate_hammer_curl
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_curls_lying_against_an_incline
+  to: alternate_incline_dumbbell_curl
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_curls_lying_against_an_incline
+  to: concentration_curls
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_curls_lying_against_an_incline
+  to: barbell_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+- from: barbell_curls_lying_against_an_incline
+  to: cable_hammer_curls_rope_attachment
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from barbell_rear_delt_row
+- from: barbell_rear_delt_row
+  to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_rear_delt_row
+  to: bent_over_two_dumbbell_row
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_rear_delt_row
+  to: bent_over_two_dumbbell_row_with_palms_in
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_rear_delt_row
+  to: bent_over_barbell_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: barbell_rear_delt_row
+  to: bent_over_one_arm_long_bar_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from barbell_seated_calf_raise
+- from: barbell_seated_calf_raise
+  to: calf_raise_on_a_dumbbell
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_seated_calf_raise
+  to: dumbbell_seated_one_leg_calf_raise
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_seated_calf_raise
+  to: standing_dumbbell_calf_raise
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_seated_calf_raise
+  to: rocking_standing_calf_raise
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from barbell_side_split_squat
+- from: barbell_side_split_squat
+  to: dumbbell_lunges
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_side_split_squat
+  to: dumbbell_rear_lunge
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_side_split_squat
+  to: split_squat_with_dumbbells
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_side_split_squat
+  to: barbell_walking_lunge
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from barbell_squat
+- from: barbell_squat
+  to: dumbbell_squat
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from barbell_walking_lunge
+- from: barbell_walking_lunge
+  to: dumbbell_lunges
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_walking_lunge
+  to: dumbbell_rear_lunge
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_walking_lunge
+  to: split_squat_with_dumbbells
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: barbell_walking_lunge
+  to: barbell_side_split_squat
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from bench_dips
+- from: bench_dips
+  to: dips_triceps_version
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from bench_press_with_bands
+- from: bench_press_with_bands
+  to: bench_dips
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bench_press_with_bands
+  to: dips_triceps_version
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bench_press_with_bands
+  to: back_flyes_with_bands
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from bent_over_barbell_row
+- from: bent_over_barbell_row
+  to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bent_over_barbell_row
+  to: bent_over_two_dumbbell_row
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bent_over_barbell_row
+  to: bent_over_two_dumbbell_row_with_palms_in
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bent_over_barbell_row
+  to: barbell_rear_delt_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: bent_over_barbell_row
+  to: bent_over_one_arm_long_bar_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+- from: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  to: bent_over_two_dumbbell_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  to: bent_over_two_dumbbell_row_with_palms_in
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from bent_over_low_pulley_side_lateral
+- from: bent_over_low_pulley_side_lateral
+  to: one_arm_incline_lateral_raise
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bent_over_low_pulley_side_lateral
+  to: one_arm_side_laterals
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from bent_over_one_arm_long_bar_row
+- from: bent_over_one_arm_long_bar_row
+  to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bent_over_one_arm_long_bar_row
+  to: bent_over_two_dumbbell_row
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bent_over_one_arm_long_bar_row
+  to: bent_over_two_dumbbell_row_with_palms_in
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bent_over_one_arm_long_bar_row
+  to: barbell_rear_delt_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: bent_over_one_arm_long_bar_row
+  to: bent_over_barbell_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from bent_over_two_dumbbell_row
+- from: bent_over_two_dumbbell_row
+  to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: bent_over_two_dumbbell_row
+  to: bent_over_two_dumbbell_row_with_palms_in
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from bent_over_two_dumbbell_row_with_palms_in
+- from: bent_over_two_dumbbell_row_with_palms_in
+  to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: bent_over_two_dumbbell_row_with_palms_in
+  to: bent_over_two_dumbbell_row
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from bodyweight_squat
+- from: bodyweight_squat
+  to: freehand_jump_squat
+  type: difficulty_step
+  delta: 2
+
+# --- from bosu_ball_cable_crunch_with_side_bends
+- from: bosu_ball_cable_crunch_with_side_bends
+  to: 3_4_sit_up
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bosu_ball_cable_crunch_with_side_bends
+  to: cross_body_crunch
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bosu_ball_cable_crunch_with_side_bends
+  to: crunch_hands_overhead
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: bosu_ball_cable_crunch_with_side_bends
+  to: cable_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: bosu_ball_cable_crunch_with_side_bends
+  to: cable_reverse_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from cable_crunch
+- from: cable_crunch
+  to: 3_4_sit_up
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_crunch
+  to: cross_body_crunch
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_crunch
+  to: crunch_hands_overhead
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_crunch
+  to: bosu_ball_cable_crunch_with_side_bends
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: cable_crunch
+  to: cable_reverse_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from cable_hammer_curls_rope_attachment
+- from: cable_hammer_curls_rope_attachment
+  to: alternate_hammer_curl
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_hammer_curls_rope_attachment
+  to: alternate_incline_dumbbell_curl
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_hammer_curls_rope_attachment
+  to: concentration_curls
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_hammer_curls_rope_attachment
+  to: barbell_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+- from: cable_hammer_curls_rope_attachment
+  to: barbell_curls_lying_against_an_incline
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from cable_incline_triceps_extension
+- from: cable_incline_triceps_extension
+  to: close_grip_dumbbell_press
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_incline_triceps_extension
+  to: decline_dumbbell_triceps_extension
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_incline_triceps_extension
+  to: cable_lying_triceps_extension
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from cable_lying_triceps_extension
+- from: cable_lying_triceps_extension
+  to: close_grip_dumbbell_press
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_lying_triceps_extension
+  to: decline_dumbbell_triceps_extension
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_lying_triceps_extension
+  to: cable_incline_triceps_extension
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from cable_reverse_crunch
+- from: cable_reverse_crunch
+  to: 3_4_sit_up
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_reverse_crunch
+  to: cross_body_crunch
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_reverse_crunch
+  to: crunch_hands_overhead
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_reverse_crunch
+  to: bosu_ball_cable_crunch_with_side_bends
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: cable_reverse_crunch
+  to: cable_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from cable_russian_twists
+- from: cable_russian_twists
+  to: decline_oblique_crunch
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_russian_twists
+  to: oblique_crunches
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_russian_twists
+  to: oblique_crunches_on_the_floor
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: cable_russian_twists
+  to: kneeling_cable_crunch_with_alternating_oblique_twists
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: cable_russian_twists
+  to: pallof_press
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from cable_shoulder_press
+- from: cable_shoulder_press
+  to: double_kettlebell_push_press
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: cable_shoulder_press
+  to: dumbbell_one_arm_shoulder_press
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: cable_shoulder_press
+  to: alternating_cable_shoulder_press
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from calf_raise_on_a_dumbbell
+- from: calf_raise_on_a_dumbbell
+  to: calf_raises_with_bands
+  type: equipment_downgrade
+  delta: -2
+- from: calf_raise_on_a_dumbbell
+  to: standing_dumbbell_calf_raise
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from chin_up
+- from: chin_up
+  to: pullups
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: chin_up
+  to: v_bar_pullup
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from close_grip_dumbbell_press
+- from: close_grip_dumbbell_press
+  to: band_skull_crusher
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: close_grip_dumbbell_press
+  to: decline_dumbbell_triceps_extension
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from close_grip_front_lat_pulldown
+- from: close_grip_front_lat_pulldown
+  to: chin_up
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: close_grip_front_lat_pulldown
+  to: pullups
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: close_grip_front_lat_pulldown
+  to: v_bar_pullup
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: close_grip_front_lat_pulldown
+  to: one_arm_lat_pulldown
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from concentration_curls
+- from: concentration_curls
+  to: alternate_hammer_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: concentration_curls
+  to: alternate_incline_dumbbell_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from cross_body_crunch
+- from: cross_body_crunch
+  to: 3_4_sit_up
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: cross_body_crunch
+  to: crunch_hands_overhead
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from crunch_hands_overhead
+- from: crunch_hands_overhead
+  to: 3_4_sit_up
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: crunch_hands_overhead
+  to: cross_body_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from decline_dumbbell_triceps_extension
+- from: decline_dumbbell_triceps_extension
+  to: band_skull_crusher
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: decline_dumbbell_triceps_extension
+  to: close_grip_dumbbell_press
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from decline_oblique_crunch
+- from: decline_oblique_crunch
+  to: oblique_crunches
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: decline_oblique_crunch
+  to: oblique_crunches_on_the_floor
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from dips_triceps_version
+- from: dips_triceps_version
+  to: bench_dips
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from double_kettlebell_push_press
+- from: double_kettlebell_push_press
+  to: shoulder_press_with_bands
+  type: equipment_downgrade
+  delta: -2
+- from: double_kettlebell_push_press
+  to: dumbbell_one_arm_shoulder_press
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from dumbbell_lunges
+- from: dumbbell_lunges
+  to: split_squat_with_dumbbells
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from dumbbell_one_arm_shoulder_press
+- from: dumbbell_one_arm_shoulder_press
+  to: shoulder_press_with_bands
+  type: equipment_downgrade
+  delta: -2
+- from: dumbbell_one_arm_shoulder_press
+  to: double_kettlebell_push_press
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from dumbbell_rear_lunge
+- from: dumbbell_rear_lunge
+  to: split_squat_with_dumbbells
+  type: difficulty_step
+  delta: -2
+
+# --- from dumbbell_seated_one_leg_calf_raise
+- from: dumbbell_seated_one_leg_calf_raise
+  to: calf_raises_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from dumbbell_squat
+- from: dumbbell_squat
+  to: squats_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from freehand_jump_squat
+- from: freehand_jump_squat
+  to: bodyweight_squat
+  type: difficulty_step
+  delta: -2
+
+# --- from glute_ham_raise
+- from: glute_ham_raise
+  to: standing_leg_curl
+  type: difficulty_step
+  delta: -2
+- from: glute_ham_raise
+  to: natural_glute_ham_raise
+  type: equipment_downgrade
+  delta: 0
+  # ? crosses is_fixed_path: a machine and a free weight are not the same strength, so D15 seeds rather than carries
+  # ? downgrade is not easier (d5 -> d5); difficulty is seeded from the source's `level` and is coarse
+
+# --- from glute_kickback
+- from: glute_kickback
+  to: single_leg_glute_bridge
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from kneeling_cable_crunch_with_alternating_oblique_twists
+- from: kneeling_cable_crunch_with_alternating_oblique_twists
+  to: decline_oblique_crunch
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: kneeling_cable_crunch_with_alternating_oblique_twists
+  to: oblique_crunches
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: kneeling_cable_crunch_with_alternating_oblique_twists
+  to: oblique_crunches_on_the_floor
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: kneeling_cable_crunch_with_alternating_oblique_twists
+  to: cable_russian_twists
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: kneeling_cable_crunch_with_alternating_oblique_twists
+  to: pallof_press
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from lateral_raise_with_bands
+- from: lateral_raise_with_bands
+  to: upright_row_with_bands
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from leg_extensions
+- from: leg_extensions
+  to: single_leg_leg_extension
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from lying_leg_curls
+- from: lying_leg_curls
+  to: natural_glute_ham_raise
+  type: equipment_downgrade
+  delta: 2
+  # ? crosses is_fixed_path: a machine and a free weight are not the same strength, so D15 seeds rather than carries
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: lying_leg_curls
+  to: seated_leg_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: lying_leg_curls
+  to: standing_leg_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from oblique_crunches
+- from: oblique_crunches
+  to: decline_oblique_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: oblique_crunches
+  to: oblique_crunches_on_the_floor
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from oblique_crunches_on_the_floor
+- from: oblique_crunches_on_the_floor
+  to: decline_oblique_crunch
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: oblique_crunches_on_the_floor
+  to: oblique_crunches
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from one_arm_incline_lateral_raise
+- from: one_arm_incline_lateral_raise
+  to: lateral_raise_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: one_arm_incline_lateral_raise
+  to: upright_row_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: one_arm_incline_lateral_raise
+  to: one_arm_side_laterals
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from one_arm_lat_pulldown
+- from: one_arm_lat_pulldown
+  to: chin_up
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: one_arm_lat_pulldown
+  to: pullups
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: one_arm_lat_pulldown
+  to: v_bar_pullup
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: one_arm_lat_pulldown
+  to: close_grip_front_lat_pulldown
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from one_arm_side_laterals
+- from: one_arm_side_laterals
+  to: lateral_raise_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: one_arm_side_laterals
+  to: upright_row_with_bands
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: one_arm_side_laterals
+  to: one_arm_incline_lateral_raise
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from pallof_press
+- from: pallof_press
+  to: decline_oblique_crunch
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: pallof_press
+  to: oblique_crunches
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: pallof_press
+  to: oblique_crunches_on_the_floor
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: pallof_press
+  to: cable_russian_twists
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: pallof_press
+  to: kneeling_cable_crunch_with_alternating_oblique_twists
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from pullups
+- from: pullups
+  to: chin_up
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: pullups
+  to: v_bar_pullup
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from rocking_standing_calf_raise
+- from: rocking_standing_calf_raise
+  to: calf_raise_on_a_dumbbell
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: rocking_standing_calf_raise
+  to: dumbbell_seated_one_leg_calf_raise
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: rocking_standing_calf_raise
+  to: standing_dumbbell_calf_raise
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: rocking_standing_calf_raise
+  to: barbell_seated_calf_raise
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+
+# --- from seated_leg_curl
+- from: seated_leg_curl
+  to: natural_glute_ham_raise
+  type: equipment_downgrade
+  delta: 2
+  # ? crosses is_fixed_path: a machine and a free weight are not the same strength, so D15 seeds rather than carries
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: seated_leg_curl
+  to: lying_leg_curls
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: seated_leg_curl
+  to: standing_leg_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from single_leg_glute_bridge
+- from: single_leg_glute_bridge
+  to: glute_kickback
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from single_leg_leg_extension
+- from: single_leg_leg_extension
+  to: leg_extensions
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from split_squat_with_dumbbells
+- from: split_squat_with_dumbbells
+  to: dumbbell_rear_lunge
+  type: difficulty_step
+  delta: 2
+- from: split_squat_with_dumbbells
+  to: dumbbell_lunges
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from squats_with_bands
+- from: squats_with_bands
+  to: bodyweight_squat
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: squats_with_bands
+  to: freehand_jump_squat
+  type: equipment_downgrade
+  delta: 2
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+
+# --- from standing_dumbbell_calf_raise
+- from: standing_dumbbell_calf_raise
+  to: calf_raises_with_bands
+  type: equipment_downgrade
+  delta: -2
+- from: standing_dumbbell_calf_raise
+  to: calf_raise_on_a_dumbbell
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from standing_leg_curl
+- from: standing_leg_curl
+  to: glute_ham_raise
+  type: difficulty_step
+  delta: 2
+- from: standing_leg_curl
+  to: natural_glute_ham_raise
+  type: equipment_downgrade
+  delta: 2
+  # ? crosses is_fixed_path: a machine and a free weight are not the same strength, so D15 seeds rather than carries
+  # ? downgrade is not easier (d3 -> d5); difficulty is seeded from the source's `level` and is coarse
+- from: standing_leg_curl
+  to: lying_leg_curls
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: standing_leg_curl
+  to: seated_leg_curl
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from stiff_leg_barbell_good_morning
+- from: stiff_leg_barbell_good_morning
+  to: stiff_legged_dumbbell_deadlift
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from stiff_legged_dumbbell_deadlift
+- from: stiff_legged_dumbbell_deadlift
+  to: band_good_morning
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: stiff_legged_dumbbell_deadlift
+  to: band_good_morning_pull_through
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+
+# --- from upright_row_with_bands
+- from: upright_row_with_bands
+  to: lateral_raise_with_bands
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from v_bar_pullup
+- from: v_bar_pullup
+  to: chin_up
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+- from: v_bar_pullup
+  to: pullups
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it

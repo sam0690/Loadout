@@ -113,3 +113,20 @@ def test_normalized_json_matches_what_was_loaded() -> None:
     from ingest.normalize import NORMALIZED
     on_disk = json.loads(NORMALIZED.read_text())
     assert len(on_disk) == 80
+
+
+def test_a_row_dropped_from_the_selection_is_dropped_from_the_catalog(
+    catalog: list[Exercise],
+) -> None:
+    """The equipment loader had this bug too; both loaders must converge, not append."""
+    engine = sa.create_engine(DATABASE_URL)
+    with engine.begin() as c:
+        load(c, catalog)
+        load(c, catalog[:10])
+        assert c.execute(
+            sa.select(sa.func.count()).select_from(exercises)
+        ).scalar_one() == 10
+        load(c, catalog)
+        assert c.execute(
+            sa.select(sa.func.count()).select_from(exercises)
+        ).scalar_one() == len(catalog)

@@ -37,6 +37,9 @@ def test_upgrade_then_downgrade_leaves_nothing_behind(engine: sa.Engine) -> None
     # alembic_version survives by design; nothing of ours may.
     assert table_names(engine) - {"alembic_version"} == set()
 
+    # Leave the schema up: every other module in the suite expects it.
+    alembic("upgrade", "head")
+
 
 def test_landmarks_are_seeded_and_ordered(engine: sa.Engine) -> None:
     alembic("upgrade", "head")

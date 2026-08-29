@@ -156,19 +156,37 @@ def dedupe(
 
 
 def select(rows: list[Exercise]) -> list[Exercise]:
-    """Cap per pattern, simplest equipment first, so every pattern reaches bodyweight."""
+    """Cap per pattern, spanning equipment tiers so each pattern is a chain.
+
+    Taking the N simplest per pattern produced patterns made entirely of push-ups, with
+    nothing to downgrade *from*, and patterns made entirely of machines, with no terminal
+    to downgrade *to*. Interleaving the tiers gives 0.5 a chain to author edges along.
+    """
     by_pattern: dict[str, list[Exercise]] = {}
-    for ex in sorted(rows, key=lambda e: (len(e.equipment), e.difficulty, e.name)):
-        by_pattern.setdefault(e_p := ex.movement_pattern, [])
-        if len(by_pattern[e_p]) < PER_PATTERN_CAP:
-            by_pattern[e_p].append(ex)
-    # Round-robin across patterns so a cap cut never starves one of them.
+    for ex in rows:
+        by_pattern.setdefault(ex.movement_pattern, []).append(ex)
+
+    ranked: dict[str, list[Exercise]] = {}
+    for pattern, candidates in by_pattern.items():
+        tiers: dict[int, list[Exercise]] = {}
+        for ex in sorted(candidates, key=lambda e: (e.difficulty, e.name)):
+            tiers.setdefault(tx.tier(ex.equipment), []).append(ex)
+        picked: list[Exercise] = []
+        rank = 0
+        while len(picked) < PER_PATTERN_CAP and any(len(v) > rank for v in tiers.values()):
+            for t in sorted(tiers):
+                if len(tiers[t]) > rank and len(picked) < PER_PATTERN_CAP:
+                    picked.append(tiers[t][rank])
+            rank += 1
+        ranked[pattern] = picked
+
+    # Round-robin across patterns so the global cap never starves one of them.
     out: list[Exercise] = []
     rank = 0
-    while len(out) < TARGET and any(len(v) > rank for v in by_pattern.values()):
-        for pattern in sorted(by_pattern):
-            if len(by_pattern[pattern]) > rank and len(out) < TARGET:
-                out.append(by_pattern[pattern][rank])
+    while len(out) < TARGET and any(len(v) > rank for v in ranked.values()):
+        for pattern in sorted(ranked):
+            if len(ranked[pattern]) > rank and len(out) < TARGET:
+                out.append(ranked[pattern][rank])
         rank += 1
     return out
 
