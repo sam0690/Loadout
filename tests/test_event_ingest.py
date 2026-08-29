@@ -318,3 +318,26 @@ def test_an_unknown_timezone_is_refused(
     bad["user_tz"] = "Mars/Olympus_Mons"
     got = client.post("/events", json={"events": [bad]})
     assert got.status_code == 422
+
+
+def test_an_event_for_an_unknown_exercise_is_stored_but_not_projected(
+    client: TestClient, db: sa.Engine, two_exercises: tuple[uuid.UUID, uuid.UUID]
+) -> None:
+    """An offline client can hold a plan older than the catalog.
+
+    The event is a fact and stays in the log. The projection cannot interpret it, so it
+    skips it rather than crashing -- otherwise one stale reference 500s the whole batch
+    and the client retries it forever.
+    """
+    a, _ = two_exercises
+    stale = a_set(uuid.UUID(int=999), 10, 2, "60", 0)
+    good = a_set(a, 10, 2, "60", 5)
+    got = client.post("/events", json={"events": [stale, good]})
+    assert got.status_code == 200, got.text
+    assert got.json()["stored"] == 2, "both events are recorded"
+
+    with db.connect() as c:
+        projected = c.execute(
+            sa.select(exercise_state.c.exercise_id).where(exercise_state.c.user_id == USER)
+        ).scalars().all()
+    assert list(projected) == [a], "only the interpretable one reaches the projection"

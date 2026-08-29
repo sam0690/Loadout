@@ -302,3 +302,16 @@ def test_consuming_a_link_frees_the_allowance(
     for _ in range(MAX_OUTSTANDING_LINKS + 3):
         token = login(client, caplog, EMAIL)
         assert client.get("/auth/me", headers=auth(token)).status_code == 200
+
+
+def test_the_magic_link_actually_reaches_a_log_handler() -> None:
+    """The link is the only delivery mechanism (D23), so it must actually be emitted.
+
+    It was not: `loadout.auth` logs at INFO and Python's root default is WARNING, so
+    every link was silently dropped and nobody could ever sign in.
+    """
+    import logging
+
+    import api.main  # noqa: F401  -- importing configures logging
+
+    assert logging.getLogger("loadout.auth").isEnabledFor(logging.INFO)

@@ -1,0 +1,8 @@
+{
+  "name": "Loadout",
+  "short_name": "Loadout",
+  "start_url": "/plan",
+  "display": "standalone",
+  "background_color": "#0b0d10",
+  "theme_color": "#0b0d10"
+}

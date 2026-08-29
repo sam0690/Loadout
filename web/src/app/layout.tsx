@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ServiceWorker } from "@/components/ServiceWorker";
 
 export const metadata: Metadata = {
   title: "Loadout",
   description: "Training that fits the equipment you actually have.",
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
@@ -17,7 +19,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="mx-auto min-h-dvh max-w-md antialiased">{children}</body>
+      <body className="mx-auto min-h-dvh max-w-md antialiased">
+        <ServiceWorker />
+        {children}
+      </body>
     </html>
   );
 }

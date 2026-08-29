@@ -8,6 +8,7 @@ This module does I/O and is deliberately outside `engine/`: it calls the pure fu
 there, it does not reimplement them.
 """
 
+import logging
 import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, replace
@@ -20,7 +21,9 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert
 
 from engine.progression.primitives import MAX_REPS_TO_FAILURE, best_e1rm_estimate
-from schema import events, exercise_state
+from schema import events, exercise_state, exercises
+
+log = logging.getLogger("loadout.projections")
 
 
 @dataclass(frozen=True)
@@ -154,7 +157,18 @@ def rebuild(conn: sa.Connection, user_id: uuid.UUID | None = None) -> int:
         sa.select(events).where(*where).order_by(events.c.client_ts, events.c.id)
     ).all()
     folded = fold(rows)
+    # An offline client can hold a plan older than the catalog, so an event may name an
+    # exercise that no longer exists. The event is still a fact and stays in the log; the
+    # projection simply cannot say anything about it. Skipping beats crashing: a
+    # projection that dies on one uninterpretable row takes every other row with it, and
+    # the client would retry the same batch forever.
+    known = set(conn.execute(sa.select(exercises.c.id)).scalars())
+    unknown = {eid for _, eid in folded if eid not in known}
+    if unknown:
+        log.warning("projection skipped %d unknown exercise(s): %s", len(unknown), unknown)
     for (uid, exercise_id), state in folded.items():
+        if exercise_id not in known:
+            continue
         conn.execute(
             insert(exercise_state).values(
                 user_id=uid, exercise_id=exercise_id,
