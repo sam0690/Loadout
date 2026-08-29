@@ -20,6 +20,8 @@ from ingest.edges import (
     load_edges,
     read_catalog,
 )
+from ingest.equipment import load as load_equipment
+from ingest.equipment import read_seed as read_equipment_seed
 from ingest.load import full_catalog
 from ingest.load import load as load_exercises
 from schema import exercise_edges, exercises
@@ -31,6 +33,9 @@ QUERY = (Path(__file__).resolve().parent.parent / "queries" / "substitutes.sql")
 def seeded() -> sa.Engine:
     engine = sa.create_engine(DATABASE_URL)
     with engine.begin() as c:
+        # Equipment first: the exercise loader resolves every slug through the alias
+        # table, and another module mutates that table to prove convergence.
+        load_equipment(c, read_equipment_seed())
         load_exercises(c, full_catalog())
         load_edges(c, SEED)
     return engine

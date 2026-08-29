@@ -9,9 +9,18 @@ import sqlalchemy as sa
 from db import DATABASE_URL
 from ingest import taxonomy as tx
 from ingest.equipment import UnknownEquipment
+from ingest.equipment import load as load_equipment
+from ingest.equipment import read_seed as read_equipment_seed
 from ingest.load import full_catalog, load
 from ingest.normalize import Exercise, match_pattern, normalize_one, run, select
 from schema import exercises
+
+
+def ensure_equipment(c: sa.Connection) -> None:
+    """The exercise loader resolves every slug through the alias table, so equipment has
+    to be whole before exercises load. Another module mutates that table to prove the
+    loader converges, so a fixture cannot assume the session seed survived."""
+    load_equipment(c, read_equipment_seed())
 
 
 @pytest.fixture(scope="module")
@@ -91,6 +100,7 @@ def test_load_is_idempotent_and_resolves_equipment_through_aliases(
 ) -> None:
     engine = sa.create_engine(DATABASE_URL)
     with engine.begin() as c:
+        ensure_equipment(c)
         load(c, catalog)
         first = c.execute(sa.select(exercises).order_by(exercises.c.slug)).all()
         load(c, catalog)
@@ -103,6 +113,7 @@ def test_load_rejects_an_equipment_slug_the_taxonomy_does_not_know() -> None:
         Exercise("x", "X", "squat", ["quads"], [], ["ThighMaster 3000"], 3, False, True)
     ]
     with engine.begin() as c, pytest.raises(UnknownEquipment):
+        ensure_equipment(c)
         load(c, bogus)
 
 
@@ -126,6 +137,7 @@ def test_a_row_dropped_from_the_selection_is_dropped_from_the_catalog(
     """The equipment loader had this bug too; both loaders must converge, not append."""
     engine = sa.create_engine(DATABASE_URL)
     with engine.begin() as c:
+        ensure_equipment(c)
         load(c, catalog)
         load(c, catalog[:10])
         assert c.execute(

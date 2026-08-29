@@ -6,7 +6,7 @@ tests/test_migrations.py asserts the two have not drifted.
 """
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 
 metadata = sa.MetaData()
 
@@ -172,4 +172,49 @@ training_context_loads = sa.Table(
         "load_increments IS NOT NULL OR bar_weight IS NOT NULL",
         name="ck_context_loads_says_something",
     ),
+)
+
+# --- Events: append-only, the source of truth (CLAUDE.md constraint 2) ------------
+
+EVENT_TYPES = (
+    "set_logged", "exercise_swapped", "workout_completed", "workout_abandoned",
+    "feedback_submitted",
+)
+
+events = sa.Table(
+    "events", metadata,
+    # CLIENT-generated, and the idempotency key (constraint 3). The server never assigns
+    # one, so a retry is free.
+    sa.Column("id", UUID(as_uuid=True), primary_key=True),
+    sa.Column("user_id", UUID(as_uuid=True), nullable=False),
+    sa.Column("type", sa.Text, nullable=False),
+    sa.Column("payload", JSONB, nullable=False),
+    # Constraint 6: UTC plus the user's IANA zone, never naive local time. "Did I train
+    # today" is computed in their zone (D14).
+    sa.Column("client_ts", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("server_ts", sa.DateTime(timezone=True), nullable=False,
+              server_default=sa.func.now()),
+    sa.Column("user_tz", sa.Text, nullable=False),
+    sa.CheckConstraint(_in("type", EVENT_TYPES), name="ck_events_type"),
+    # Replay walks the log in order, per user.
+    sa.Index("ix_events_user_client_ts", "user_id", "client_ts"),
+)
+
+# --- Projections: derived, rebuildable, never patched ----------------------------
+
+exercise_state = sa.Table(
+    "exercise_state", metadata,
+    sa.Column("user_id", UUID(as_uuid=True), primary_key=True),
+    sa.Column(
+        "exercise_id", UUID(as_uuid=True),
+        sa.ForeignKey("exercises.id", ondelete="CASCADE"), primary_key=True,
+    ),
+    sa.Column("current_load", sa.Numeric, nullable=True),
+    sa.Column("current_reps", sa.SmallInteger, nullable=True),
+    sa.Column("e1rm", sa.Numeric, nullable=True),
+    sa.Column("consecutive_successes", sa.SmallInteger, nullable=False, server_default="0"),
+    sa.Column("consecutive_failures", sa.SmallInteger, nullable=False, server_default="0"),
+    # D15: seeded across a graph edge, never trained against yet.
+    sa.Column("is_estimated", sa.Boolean, nullable=False, server_default=sa.false()),
+    sa.Column("last_performed_at", sa.DateTime(timezone=True), nullable=True),
 )

@@ -19,6 +19,11 @@ def conn() -> Iterator[sa.Connection]:
     with engine.begin() as c:
         load(c, read_seed())
         yield c
+    # This module deletes equipment rows on purpose, to prove the loader converges rather
+    # than appends. Put the taxonomy back in its own committed transaction so a module
+    # that interleaves after it does not find a hole.
+    with engine.begin() as c:
+        load(c, read_seed())
 
 
 def snapshot(c: sa.Connection) -> tuple[list[tuple[Any, ...]], list[tuple[Any, ...]]]:

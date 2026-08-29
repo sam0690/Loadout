@@ -18,6 +18,8 @@ from engine.graph import Edge, Graph, Node, NoSubstituteFound, Reason, find_subs
 from engine.progression.volume import Landmark
 from ingest.edges import SEED as EDGE_SEED
 from ingest.edges import load_edges
+from ingest.equipment import load as load_equipment
+from ingest.equipment import read_seed as read_equipment_seed
 from ingest.load import full_catalog
 from ingest.load import load as load_exercises
 from schema import exercises, muscle_groups
@@ -37,6 +39,7 @@ def live() -> tuple[list[Candidate], dict[str, Landmark], sa.Engine]:
     """
     engine = sa.create_engine(DATABASE_URL)
     with engine.begin() as c:
+        load_equipment(c, read_equipment_seed())
         load_exercises(c, full_catalog())
         load_edges(c, EDGE_SEED)
     with engine.connect() as c:

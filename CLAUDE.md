@@ -89,6 +89,12 @@ A change to engine logic without a corresponding property test is incomplete.
 
 ## Current phase
 
-Phase 0 — catalog, taxonomy, substitution graph. No API surface, no frontend, no auth yet. Work outside this phase needs explicit sign-off.
+Phase 2 — ship it. Event ingest, API surface, frontend. Auth arrives with 2.2.
 
-D1–D16 in `docs/decisions.md` are settled. Nothing is blocking 0.1.
+Phases 0 and 1 are complete: catalog (89 exercises), taxonomy, substitution graph (216
+edges, every pattern reaching a zero-equipment terminal), progression primitives, double
+progression, volume landmarks, fatigue gate, plan generator. `engine/` is pure throughout
+and property-tested.
+
+D1–D22 in `docs/decisions.md` are settled. Phases 2.5 and later still need real events
+before they mean anything.
