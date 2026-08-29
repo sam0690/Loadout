@@ -257,3 +257,29 @@ magic_links = sa.Table(
     sa.Column("consumed_at", sa.DateTime(timezone=True), nullable=True),
     sa.Index("ix_magic_links_user", "user_id"),
 )
+
+plans = sa.Table(
+    "plans", metadata,
+    sa.Column("id", UUID(as_uuid=True), primary_key=True),
+    sa.Column(
+        "user_id", UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE", name="fk_plans_user"), nullable=False,
+    ),
+    sa.Column(
+        "training_context_id", UUID(as_uuid=True),
+        sa.ForeignKey("training_contexts.id", ondelete="CASCADE", name="fk_plans_context"),
+        nullable=False,
+    ),
+    # Monday of the week the plan covers, in the user's own zone (constraint 6).
+    sa.Column("week_of", sa.Date, nullable=False),
+    sa.Column("generated_at", sa.DateTime(timezone=True), nullable=False,
+              server_default=sa.func.now()),
+    # Which engine produced it. The engine is deterministic, so this row is a cache and
+    # this column is what makes a rebuild comparable.
+    sa.Column("engine_version", sa.Text, nullable=False),
+    # The whole Plan. It is always read whole -- the client needs every session and every
+    # substitution set offline (§6) -- and nothing queries inside it.
+    sa.Column("payload", JSONB, nullable=False),
+    # One plan per user per week; regenerating replaces rather than accumulating.
+    sa.Index("uq_plans_user_week", "user_id", "week_of", unique=True),
+)

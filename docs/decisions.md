@@ -506,3 +506,32 @@ Two related rules the API keeps, neither of which the PRD states:
 
 Uniqueness is per user, not global — two users each having a default is the normal case,
 which is why the index is on `(user_id)` and not on `is_default` alone.
+
+## D25 — Plans are stored whole, as one JSONB row — APPLIED
+
+`plans(id, user_id, training_context_id, week_of, generated_at, engine_version, payload)`,
+with the whole `Plan` in `payload`.
+
+The plan is always read whole — the client needs every session and every substitution set
+offline, because the occupied-machine swap happens mid-set in a basement with no signal
+(§6) — and nothing queries inside it. Phase 3 analytics will read the event log, not the
+plan. Normalising into plans/sessions/items/substitutes would be four tables and a join to
+answer the only question anyone asks.
+
+**The row is a cache, not a source of truth.** The engine is pure and deterministic, so
+the same context and the same days produce the same plan. `engine_version` records which
+engine produced it, which is what makes a replay through a new version comparable rather
+than merely different.
+
+One plan per user per week, enforced by a unique index on `(user_id, week_of)`.
+Regenerating replaces rather than accumulating, for the same reason: the newest run of a
+deterministic function is the answer.
+
+`week_of` is the Monday of the week the first session falls in, in the user's own zone —
+the API takes calendar dates the client has already resolved, since the engine has no
+clock and "no muscle hard on consecutive days" (D14) needs real dates rather than a
+session count. Monday/Wednesday/Friday and Monday/Tuesday/Wednesday are not the same week.
+
+**Job ownership.** The caller is recorded in the RQ job's metadata and checked on every
+poll. A job id is guessable enough that `GET /jobs/{id}` must not leak another user's
+plan; like a context, someone else's job is 404 rather than 403.

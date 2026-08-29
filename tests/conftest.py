@@ -31,16 +31,14 @@ def _create_test_database() -> None:
     admin.dispose()
 
 
-def pytest_sessionstart() -> None:
-    _create_test_database()
-    subprocess.run(
-        ["uv", "run", "alembic", "upgrade", "head"], check=True, capture_output=True
-    )
-    # Seed the whole catalog here rather than in one module's fixture. Equipment is a
-    # prerequisite for exercises (the loader resolves every slug through the alias
-    # table), exercises are a prerequisite for edges, and edges are a prerequisite for
-    # anything that traverses the graph. Leaving that chain to per-module fixtures makes
-    # a test pass or fail depending on which file ran first.
+def seed_catalog() -> None:
+    """Load equipment, exercises and edges into the test database.
+
+    Callable rather than inline, because more than one thing needs it: the session start,
+    and anything that empties the database on purpose. Equipment is a prerequisite for
+    exercises (the loader resolves every slug through the alias table), exercises for
+    edges, and edges for anything that traverses the graph.
+    """
     from ingest.edges import SEED as EDGE_SEED
     from ingest.edges import load_edges
     from ingest.equipment import load as load_equipment
@@ -54,3 +52,11 @@ def pytest_sessionstart() -> None:
         load_exercises(conn, full_catalog())
         load_edges(conn, EDGE_SEED)
     engine.dispose()
+
+
+def pytest_sessionstart() -> None:
+    _create_test_database()
+    subprocess.run(
+        ["uv", "run", "alembic", "upgrade", "head"], check=True, capture_output=True
+    )
+    seed_catalog()

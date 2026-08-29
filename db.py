@@ -43,6 +43,15 @@ def build_url() -> str:
 DATABASE_URL = build_url()
 
 
+def redis_url() -> str:
+    """Queue backend. Unlike the database and the signing key this has a default: it
+    holds no data worth protecting and losing it costs a re-queued job, nothing more."""
+    _load_env_file()
+    if url := os.environ.get("REDIS_URL"):
+        return url
+    return f"redis://localhost:{os.environ.get('REDIS_PORT', '6380')}/0"
+
+
 def jwt_secret() -> str:
     """Signing key for session tokens. Required, with no default.
 

@@ -7,6 +7,7 @@ import subprocess
 
 import pytest
 import sqlalchemy as sa
+from conftest import seed_catalog
 
 from db import DATABASE_URL
 
@@ -37,8 +38,11 @@ def test_upgrade_then_downgrade_leaves_nothing_behind(engine: sa.Engine) -> None
     # alembic_version survives by design; nothing of ours may.
     assert table_names(engine) - {"alembic_version"} == set()
 
-    # Leave the schema up: every other module in the suite expects it.
+    # Put the schema AND the data back. Dropping every table also drops the session seed,
+    # and a module that runs after this one has no way to know that happened -- which is
+    # exactly how this test silently broke every API test that sorts after it.
     alembic("upgrade", "head")
+    seed_catalog()
 
 
 def test_landmarks_are_seeded_and_ordered(engine: sa.Engine) -> None:
