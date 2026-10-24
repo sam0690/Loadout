@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, type ContextOut, type Profile, type ProfilePatch } from "@/lib/api/client";
+import { api, signOut, type ContextOut, type Profile, type ProfilePatch } from "@/lib/api/client";
 import { activeContextId, setActiveContextId } from "@/lib/context";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -15,7 +15,7 @@ import { TrainingFields } from "@/components/intake/TrainingFields";
 import { SettingsIcon } from "@/components/ui/icons";
 import { BodyMetrics } from "@/components/BodyMetrics";
 import { bmiFromProfile } from "@/lib/bmi";
-import { cacheProfile, forgetProfile } from "@/lib/profile";
+import { cacheProfile } from "@/lib/profile";
 import { readUnits } from "@/lib/units";
 
 type Archetype = { slug: string; name: string; equipment: string[] };
@@ -114,10 +114,8 @@ export default function Settings() {
     }
   }
 
-  function signOut() {
-    window.localStorage.removeItem("loadout.token");
-    // The profile is cached on this device; signing out must not leave it behind.
-    forgetProfile();
+  function leave() {
+    signOut();
     router.replace("/onboarding");
   }
 
@@ -261,7 +259,7 @@ export default function Settings() {
       </Section>
 
       <Section title="Account">
-        <Button onClick={signOut}>Sign out</Button>
+        <Button onClick={leave}>Sign out</Button>
       </Section>
     </AppShell>
   );

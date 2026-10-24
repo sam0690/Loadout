@@ -198,19 +198,34 @@ function Hero({ item, started }: { item: PlanItem; started: boolean }) {
   );
 }
 
+/**
+ * A rest day, with a way out of it. Sessions move: a missed Friday gets done on
+ * Saturday, a busy Monday gets pulled forward. The sets are logged on the day they
+ * happen, which is what the fatigue gate reads, so training early is honest data.
+ */
 function RestDay({ next }: { next: PlanSession | null }) {
+  const router = useRouter();
   return (
     <section>
       <p className="mb-6 text-[0.9375rem] text-ink-muted">
         Nothing scheduled today. Recovery is when the work turns into strength.
       </p>
       {next ? (
-        <RowLink
-          href="/week"
-          title={`Next: ${formatDay(next.day, { weekday: "long" })}`}
-          detail={`${next.items.length} exercises · ${focus(next)}`}
-          trailing="Week →"
-        />
+        <>
+          <RowLink
+            href="/week"
+            title={`Next: ${formatDay(next.day, { weekday: "long" })}`}
+            detail={`${next.items.length} exercises · ${focus(next)}`}
+            trailing="Week →"
+          />
+          <Button
+            full
+            className="mt-3"
+            onClick={() => router.push(`/workout?exercise=${next.items[0]!.exercise_id}`)}
+          >
+            Do {formatDay(next.day, { weekday: "long" })}&apos;s session now
+          </Button>
+        </>
       ) : (
         <RowLink href="/week" title="This week is done" detail="Build next week from the Week tab" />
       )}

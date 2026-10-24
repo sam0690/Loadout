@@ -69,6 +69,18 @@ export function setToken(value: string): void {
   window.localStorage.setItem("loadout.token", value);
 }
 
+/**
+ * Forget this device's account: the token and everything cached under it.
+ *
+ * One list, so a sign-out and an expired session cannot drift apart -- a key left
+ * behind is the next account seeing the last one's plan.
+ */
+export function signOut(): void {
+  for (const key of ["loadout.token", "loadout.plan", "loadout.profile", "loadout.context"]) {
+    window.localStorage.removeItem(key);
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const auth = token();
   const res = await fetch(`${BASE}${path}`, {
@@ -79,6 +91,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...init?.headers,
     },
   });
+  // A token the server refuses is a dead session (re-seeded database, rotated secret).
+  // Falling back to the cached plan, as for a network failure, showed the last account's
+  // week with no way to tell -- so start over at sign-in instead. A 401 can only come
+  // from a server that answered, so this never fires offline.
+  if (res.status === 401 && auth !== null) {
+    signOut();
+    window.location.replace("/onboarding");
+  }
   if (!res.ok) throw new ApiError(res.status, await res.text());
   return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
 }

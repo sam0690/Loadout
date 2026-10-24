@@ -25,10 +25,6 @@ export function cacheProfile(profile: Profile): void {
   window.localStorage.setItem(KEY, JSON.stringify(profile));
 }
 
-export function forgetProfile(): void {
-  window.localStorage.removeItem(KEY);
-}
-
 /** Cache first, then network. Resolves twice-ish: callers re-render on the fresh one. */
 export async function refreshProfile(): Promise<Profile | null> {
   try {
