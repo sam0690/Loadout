@@ -35,9 +35,7 @@ export function Analysis({
 
   return (
     <section className={cn("space-y-7", className)} aria-label="Training analysis">
-      <h2 className="text-[0.8125rem] tracking-[0.08em] uppercase text-ink-faint">
-        How the week is going
-      </h2>
+      <h2 className="label">This week</h2>
 
       <Adherence data={data} />
 
@@ -76,14 +74,14 @@ function Adherence({ data }: { data: Data }) {
     <div className="rounded-card bg-surface px-4 py-4">
       <div className="flex items-baseline justify-between gap-4">
         <p className="flex items-baseline gap-2">
-          <span className="text-[1.75rem] leading-none font-semibold tracking-[-0.02em] text-ink">
+          <span className="font-display text-display font-extrabold text-ink">
             {data.done}
           </span>
           <span className="text-[0.9375rem] text-ink-faint">
             of {data.prescribed} sets this week
           </span>
         </p>
-        <span className="text-[0.9375rem] text-ink-muted">{pct}%</span>
+        <span className="font-display text-[1.5rem] font-extrabold text-accent">{pct}%</span>
       </div>
 
       <Meter value={data.done} max={data.prescribed} className="mt-3" />
@@ -103,7 +101,7 @@ function MuscleBar({ volume }: { volume: MuscleVolume }) {
         {volume.muscle.replaceAll("_", " ")}
       </span>
       <Meter value={volume.done} max={target} />
-      <span className="text-[0.8125rem] text-ink-faint tabular-nums">
+      <span className="font-display text-[0.9375rem] font-semibold text-ink-faint">
         {volume.done}/{volume.prescribed}
       </span>
     </li>
@@ -209,7 +207,9 @@ function Figure({
   return (
     <figure className="rounded-card bg-surface px-4 py-4">
       <figcaption className="mb-3.5">
-        <p className="text-[0.9375rem] text-ink">{title}</p>
+        <p className="font-display text-[1.25rem] leading-tight font-extrabold text-ink uppercase">
+          {title}
+        </p>
         <p className="mt-0.5 text-2xs leading-relaxed text-ink-faint">{note}</p>
       </figcaption>
       {children}

@@ -62,8 +62,8 @@ function Figure({
 }) {
   return (
     <p className="flex items-baseline gap-2">
-      <span className="text-2xs tracking-[0.08em] uppercase text-ink-faint">{label}</span>
-      <span className="text-[1.0625rem] font-medium text-ink">{value}</span>
+      <span className="label">{label}</span>
+      <span className="font-display text-[1.5rem] leading-none font-extrabold text-ink">{value}</span>
       {note && <span className="text-[0.8125rem] text-ink-faint">{note}</span>}
     </p>
   );

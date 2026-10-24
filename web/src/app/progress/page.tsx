@@ -8,12 +8,15 @@ import { analyse } from "@/lib/analysis";
 import { bmiFromProfile } from "@/lib/bmi";
 import { cachedProfile, refreshProfile } from "@/lib/profile";
 import type { Profile } from "@/lib/api/client";
+import { trends } from "@/lib/progress";
 import { Analysis } from "@/components/Analysis";
+import { Strength } from "@/components/Strength";
 import { BodyMetrics } from "@/components/BodyMetrics";
 import { fromDay, localDay } from "@/lib/day";
 import { displayLoad, readUnits, type Units } from "@/lib/units";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { RowSkeleton } from "@/components/ui/Skeleton";
 import { HistoryIcon } from "@/components/ui/icons";
 
@@ -36,9 +39,13 @@ interface Day {
   unsynced: number;
 }
 
+/** Sessions shown before "Show older": the strength cards already carry the long view. */
+const RECENT = 7;
+
 export default function Progress() {
   const [sets, setSets] = useState<LoggedSet[] | null>(null);
   const [profile, setProfile] = useState<Profile | null>(cachedProfile);
+  const [older, setOlder] = useState(false);
   const units = readUnits();
 
   useEffect(() => {
@@ -53,6 +60,7 @@ export default function Progress() {
     const plan = cachedPlan();
     return plan === null ? null : analyse(sets, plan, localDay());
   }, [sets]);
+  const strength = useMemo(() => (sets === null ? [] : trends(sets)), [sets]);
   const measurements = profile ? bmiFromProfile(profile) : null;
 
   const totals = useMemo(() => {
@@ -73,6 +81,8 @@ export default function Progress() {
             : undefined
         }
       />
+
+      <Strength trends={strength} units={units} className="mb-10" />
 
       {analysis && <Analysis data={analysis} units={units} className="mb-10" />}
 
@@ -106,7 +116,7 @@ export default function Progress() {
         />
       )}
 
-      {days?.map((entry) => (
+      {days?.slice(0, older ? undefined : RECENT).map((entry) => (
         <section key={entry.day} className="mb-8">
           <div className="mb-2.5 flex items-baseline justify-between gap-3">
             <h2 className="label">
@@ -143,6 +153,11 @@ export default function Progress() {
           </div>
         </section>
       ))}
+      {days !== null && days.length > RECENT && (
+        <Button variant="ghost" full compact onClick={() => setOlder(!older)}>
+          {older ? "Show fewer" : `Show ${days.length - RECENT} older sessions`}
+        </Button>
+      )}
     </AppShell>
   );
 }
