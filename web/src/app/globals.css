@@ -159,6 +159,15 @@ button {
   }
 }
 
+/* Two photos, start and end position: the second fades in, holds, fades out. Holding on
+ * each end is what makes it read as a movement rather than a flicker. Reduced motion
+ * runs it to 100%, where the second frame is gone and the start position stands still. */
+@keyframes frames {
+  0%, 35% { opacity: 0; }
+  50%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* The one authored moment in the app. Toasts arrive from where the thumb is, rise a
  * few pixels and settle -- exponential ease-out from an already-visible default, so a
  * dropped frame degrades to "it appeared" rather than to a broken animation. */

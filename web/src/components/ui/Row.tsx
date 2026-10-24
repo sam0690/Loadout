@@ -17,11 +17,14 @@ interface Common {
   trailing?: ReactNode;
   selected?: boolean;
   className?: string;
+  /** Sits before the title. A thumbnail. */
+  leading?: ReactNode;
 }
 
-function body({ title, detail, trailing, selected }: Common) {
+function body({ title, detail, trailing, selected, leading }: Common) {
   return (
     <>
+      {leading}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[0.9375rem] font-medium text-ink">{title}</span>
         {detail !== undefined && (

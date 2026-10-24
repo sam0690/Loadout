@@ -6,6 +6,7 @@ import type { Item } from "@/lib/workout";
 import { displayLoad, type Units } from "@/lib/units";
 import { CheckIcon } from "./ui/icons";
 import { cn } from "./ui/cn";
+import { Thumb } from "./ExerciseMedia";
 
 /**
  * One segment per exercise: done, current, still to come. Tappable, because the order
@@ -134,17 +135,21 @@ export function SwapList({
           type="button"
           onClick={() => onPick(substitute)}
           className={cn(
-            "no-select w-full rounded-card bg-surface px-4 py-3.5 text-left capitalize",
+            "no-select flex w-full items-center gap-4 rounded-card bg-surface px-4 py-3 text-left capitalize",
             "transition-colors duration-150 ease-out-soft hover:bg-raised active:bg-raised",
           )}
         >
-          <span className="block text-[0.9375rem] font-medium text-ink">
-            {substitute.slug.replaceAll("_", " ")}
-          </span>
-          <span className="mt-0.5 block text-[0.8125rem] normal-case text-ink-faint">
-            {substitute.equipment.length
-              ? substitute.equipment.join(", ").replaceAll("_", " ")
-              : "no equipment"}
+          {/* Seeing the alternative matters most here: the choice is made mid-session. */}
+          <Thumb slug={substitute.slug} />
+          <span className="min-w-0">
+            <span className="block text-[0.9375rem] font-medium text-ink">
+              {substitute.slug.replaceAll("_", " ")}
+            </span>
+            <span className="mt-0.5 block text-[0.8125rem] normal-case text-ink-faint">
+              {substitute.equipment.length
+                ? substitute.equipment.join(", ").replaceAll("_", " ")
+                : "no equipment"}
+            </span>
           </span>
         </button>
       ))}

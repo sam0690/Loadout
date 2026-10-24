@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { RowLink } from "@/components/ui/Row";
 import { useToast } from "@/components/ui/Toast";
 import { OfflineIcon } from "@/components/ui/icons";
+import { Frames } from "@/components/ExerciseMedia";
 import {
   CloseOut,
   ContextSwitcher,
@@ -180,7 +181,8 @@ function Hero({ item, started }: { item: PlanItem; started: boolean }) {
   const [value, unit] = load ? load.split(" ") : [String(item.target_reps), "reps"];
 
   return (
-    <section className="mb-6 rounded-card border border-line bg-surface p-5">
+    <section className="mb-6 overflow-hidden rounded-card border border-line bg-surface p-5">
+      <Frames slug={item.slug} className="-mx-5 -mt-5 mb-4 aspect-[3/2] rounded-none" />
       <p className="label">{started ? "Up next" : "First up"}</p>
       <h2 className="mt-1 font-display text-[1.75rem] leading-tight font-extrabold uppercase text-ink">
         {exerciseName(item)}

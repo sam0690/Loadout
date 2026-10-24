@@ -11,6 +11,7 @@ import { EmptyState } from "./ui/EmptyState";
 import { RowSkeleton } from "./ui/Skeleton";
 import { CheckIcon, PlanIcon } from "./ui/icons";
 import { cn } from "./ui/cn";
+import { Thumb } from "./ExerciseMedia";
 
 export type PlanSession = PlanPayload["sessions"][number];
 export type PlanItem = PlanSession["items"][number];
@@ -83,6 +84,7 @@ export function ItemRow({ item, count }: { item: PlanItem; count: number }) {
   return (
     <RowLink
       href={`/workout?exercise=${item.exercise_id}`}
+      leading={<Thumb slug={item.slug} />}
       title={<span className="capitalize">{exerciseName(item)}</span>}
       detail={
         <>

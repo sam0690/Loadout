@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/Toast";
 import { SyncBadge } from "@/components/Sync";
 import { RestTimer, SetList, SlotBar, SwapList } from "@/components/Workout";
 import { UndoIcon } from "@/components/ui/icons";
+import { Frames, HowTo } from "@/components/ExerciseMedia";
 import { cn } from "@/components/ui/cn";
 
 /**
@@ -232,6 +233,7 @@ function Workout() {
       <SlotBar items={items} doneCount={doneCount} index={index} onSelect={setIndex} />
 
       <section className="mt-4">
+        <Frames slug={current.slug} className="mb-4 h-44" />
         <h1 className="text-[2rem] leading-[1.05] text-ink">{current.slug.replaceAll("_", " ")}</h1>
         <p className="mt-3 flex items-baseline gap-2">
           <span className="font-display text-hero font-extrabold text-accent">{value}</span>
@@ -254,6 +256,7 @@ function Workout() {
       <div className="mt-5 space-y-3">
         <SetList item={current} sets={done} units={units} />
         {done.length > 0 && <RestTimer since={done.at(-1)!.at} />}
+        <HowTo slug={current.slug} name={current.slug.replaceAll("_", " ")} />
       </div>
 
       <div className="mt-auto space-y-3 pt-8 pb-6">
