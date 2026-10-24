@@ -55,6 +55,13 @@ Store UTC plus the user's IANA zone. Never store naive local time. "Did I train 
 
 ---
 
+## Running locally
+
+`make up` / `make down` / `make status` / `make logs`. `make seed` once on a fresh
+database (catalog, graph, exercise media). `make test` for unit tests, `make e2e` against
+a running stack. Ports come from `.env`; if 5433 is taken on a machine, change
+`POSTGRES_PORT` there, not in the Makefile. Web on 3000, API (and `/docs`) on 8001.
+
 ## Code conventions
 
 - Python: type hints on every function signature. `ruff` + `mypy --strict` on `engine/`.
