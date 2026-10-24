@@ -144,7 +144,9 @@ def request_link(body: RequestLink, db: Annotated[sa.Engine, Depends(engine)]) -
             log.warning("magic_link_throttled user_id=%s", user_id)
             return ACCEPTED
         token = issue_token(conn, user_id)
-    send_link(email, f"{BASE_URL}/auth/verify?token={token}")
+    # Onboarding is the page that reads ?token= and signs in; /auth/verify is the API
+    # call it makes, not a page, and a link pointing there opened a 404.
+    send_link(email, f"{BASE_URL}/onboarding?token={token}")
     return ACCEPTED
 
 
