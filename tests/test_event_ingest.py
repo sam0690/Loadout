@@ -393,3 +393,31 @@ def test_feedback_payloads_are_not_pinned_yet(client: TestClient) -> None:
         "client_ts": START.isoformat(), "user_tz": TZ,
     }
     assert client.post("/events", json={"events": [event]}).json()["stored"] == 1
+
+
+# --- restoring a device ---------------------------------------------------------
+
+
+def test_the_log_comes_back_oldest_first_and_only_the_callers(
+    client: TestClient, db: sa.Engine, two_exercises: tuple[uuid.UUID, uuid.UUID]
+) -> None:
+    later = a_set(two_exercises[0], 10, 2, "20", 5)
+    earlier = a_set(two_exercises[1], 8, 1, "30", 1)
+    client.post("/events", json={"events": [later, earlier]})
+    other = uuid.UUID(int=43)
+    with db.begin() as c:
+        c.execute(pg_insert(users).values(id=other, email=f"events-{other}@example.test")
+                  .on_conflict_do_nothing(index_elements=["id"]))
+    TestClient(app, headers=session_for(other)).post(
+        "/events", json={"events": [a_set(two_exercises[0], 5, 0, "99", 0)]}
+    )
+
+    got = client.get("/events")
+    assert got.status_code == 200, got.text
+    body = got.json()
+    assert [e["id"] for e in body] == [earlier["id"], later["id"]]
+    assert body[0]["payload"]["load"] == "30" and body[0]["server_ts"]
+
+
+def test_the_log_needs_a_session(db: sa.Engine) -> None:
+    assert TestClient(app).get("/events").status_code == 401

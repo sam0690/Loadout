@@ -67,6 +67,23 @@ export function token(): string | null {
   return window.localStorage.getItem("loadout.token");
 }
 
+/**
+ * The signed-in account's id, read from the session token's `sub`. Not verified -- the
+ * server does that on every request; this only decides whose events this device shows
+ * and sends.
+ */
+export function currentUserId(): string | null {
+  const t = token();
+  if (t === null) return null;
+  try {
+    const body = t.split(".")[1]!.replace(/-/g, "+").replace(/_/g, "/");
+    const sub: unknown = JSON.parse(atob(body)).sub;
+    return typeof sub === "string" ? sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export function setToken(value: string): void {
   window.localStorage.setItem("loadout.token", value);
 }
@@ -146,6 +163,8 @@ export const api = {
   job: (id: string) => request<JobStatus>(`/jobs/${id}`),
 
   currentPlan: () => request<PlanOut>("/plans/current"),
+
+  listEvents: () => request<components["schemas"]["StoredEvent"][]>("/events"),
 
   postEvents: (events: unknown[]) =>
     request<Accepted>("/events", {

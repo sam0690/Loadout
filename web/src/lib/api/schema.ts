@@ -201,7 +201,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Events
+         * @description The caller's own log, oldest first, so a new device can rebuild its history.
+         *
+         *     The device keeps its own copy for offline, but that copy started empty on a new phone
+         *     or after cleared storage, and history, progress and PRs all read from it.
+         */
+        get: operations["list_events_events_get"];
         put?: never;
         /** Post Events */
         post: operations["post_events_events_post"];
@@ -557,6 +564,35 @@ export interface components {
              * Format: date-time
              */
             expires_at: string;
+        };
+        /** StoredEvent */
+        StoredEvent: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "set_logged" | "exercise_swapped" | "workout_completed" | "workout_abandoned" | "feedback_submitted";
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Client Ts
+             * Format: date-time
+             */
+            client_ts: string;
+            /** User Tz */
+            user_tz: string;
+            /**
+             * Server Ts
+             * Format: date-time
+             */
+            server_ts: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -956,6 +992,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredEvent"][];
                 };
             };
         };

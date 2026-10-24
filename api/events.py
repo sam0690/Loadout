@@ -159,6 +159,36 @@ def post_events(
     )
 
 
+class StoredEvent(Event):
+    server_ts: datetime
+
+
+# ponytail: the whole log in one response. A year of training is a few thousand sets,
+# well under a megabyte; page it (after a client_ts cursor) when a log outgrows that.
+@router.get("/events")
+def list_events(
+    user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+) -> list[StoredEvent]:
+    """The caller's own log, oldest first, so a new device can rebuild its history.
+
+    The device keeps its own copy for offline, but that copy started empty on a new phone
+    or after cleared storage, and history, progress and PRs all read from it.
+    """
+    with db.connect() as conn:
+        rows = conn.execute(
+            sa.select(events)
+            .where(events.c.user_id == user_id)
+            .order_by(events.c.client_ts, events.c.id)
+        ).all()
+    return [
+        StoredEvent(
+            id=r.id, type=r.type, payload=r.payload, client_ts=r.client_ts,
+            user_tz=r.user_tz, server_ts=r.server_ts,
+        )
+        for r in rows
+    ]
+
+
 def _first_error(exc: ValidationError) -> str:
     err = exc.errors()[0]
     where = ".".join(str(p) for p in err["loc"]) or "payload"

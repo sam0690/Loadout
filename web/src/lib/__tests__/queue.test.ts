@@ -141,9 +141,13 @@ describe("flushing", () => {
 });
 
 describe("keeping in sync", () => {
-  // Node has no window; the "online" listener only needs something to attach to.
+  // Node has no window; the "online" listener needs something to attach to, and the
+  // queue reads the (absent) session token from localStorage.
   beforeEach(() => {
-    vi.stubGlobal("window", new EventTarget());
+    vi.stubGlobal(
+      "window",
+      Object.assign(new EventTarget(), { localStorage: { getItem: () => null } }),
+    );
   });
   afterEach(() => {
     vi.unstubAllGlobals();

@@ -24,6 +24,9 @@ export interface QueuedEvent {
   /** Set when the server turned this event away as malformed. Kept on the device, never
    * resent: one bad event must not hold up every good one queued behind it. */
   rejected?: string;
+  /** The account that logged it (the session's `sub`). Absent on events from before
+   * accounts were tracked here, which are treated as the signed-in user's. */
+  user?: string;
 }
 
 const db = new Dexie("loadout") as Dexie & {

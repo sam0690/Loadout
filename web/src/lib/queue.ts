@@ -1,4 +1,5 @@
 import { db, type QueuedEvent } from "./db";
+import { currentUserId } from "./api/client";
 import { localDay } from "./day";
 
 /** The user's own zone, resolved here rather than on the server (constraint 6). */
@@ -26,15 +27,29 @@ export async function enqueue(
     client_ts: now.toISOString(),
     user_tz: userTimezone(),
     synced_at: null,
+    user: currentUserId() ?? undefined,
   };
   await db.events.add(event);
   return event;
 }
 
+/**
+ * This account's events, oldest first. Every read goes through here.
+ *
+ * The device store outlives a sign-out (unsent sets must not be lost), so without this a
+ * second account on the same phone saw the first one's history -- and uploaded its
+ * unsent sets under the wrong account.
+ */
+async function mine(): Promise<QueuedEvent[]> {
+  const user = currentUserId();
+  const all = await db.events.orderBy("client_ts").toArray();
+  return all.filter((e) => e.user === undefined || e.user === user);
+}
+
 export async function pending(): Promise<QueuedEvent[]> {
   // Dexie cannot index null, so the filter is in memory. The queue is a session's worth
   // of sets; if that ever stops being true, store a 0/1 flag instead of a timestamp.
-  const all = await db.events.orderBy("client_ts").toArray();
+  const all = await mine();
   return all.filter((e) => e.synced_at === null && e.rejected === undefined);
 }
 
@@ -52,7 +67,7 @@ export async function loggedToday(
   exerciseId: string,
   day: string,
 ): Promise<QueuedEvent[]> {
-  const all = await db.events.orderBy("client_ts").toArray();
+  const all = await mine();
   return all.filter(
     (e) =>
       e.type === "set_logged" &&
@@ -105,7 +120,7 @@ function asLoggedSet(event: QueuedEvent): LoggedSet {
  * the queue already holds every set including the ones not yet sent.
  */
 export async function loggedSets(): Promise<LoggedSet[]> {
-  const all = await db.events.orderBy("client_ts").reverse().toArray();
+  const all = (await mine()).reverse();
   return all.filter((e) => e.type === "set_logged").map(asLoggedSet);
 }
 
@@ -135,7 +150,7 @@ export async function discard(id: string): Promise<void> {
  */
 export async function swapsOn(day: string): Promise<Map<string, string>> {
   const out = new Map<string, string>();
-  for (const e of await db.events.orderBy("client_ts").toArray()) {
+  for (const e of await mine()) {
     if (e.type !== "exercise_swapped" || localDay(new Date(e.client_ts)) !== day) continue;
     out.set(String(e.payload.from_exercise_id), String(e.payload.to_exercise_id));
   }
@@ -153,7 +168,7 @@ export type Outcome = "completed" | "abandoned";
  * workout finishing, so this is recorded for the day rather than from the logger.
  */
 export async function sessionOutcome(day: string): Promise<Outcome | null> {
-  const all = await db.events.orderBy("client_ts").reverse().toArray();
+  const all = (await mine()).reverse();
   for (const event of all) {
     if (event.type !== "workout_completed" && event.type !== "workout_abandoned") continue;
     if (event.payload.day !== day) continue;
@@ -172,4 +187,41 @@ export async function closeSession(
     outcome === "completed" ? "workout_completed" : "workout_abandoned",
     { day, sets_completed: setsCompleted },
   );
+}
+
+type Stored = Pick<QueuedEvent, "id" | "type" | "payload" | "client_ts" | "user_tz"> & {
+  server_ts: string;
+};
+
+const restored = new Set<string>();
+
+/**
+ * Merge this account's server log into the device, once per account per page load.
+ *
+ * History, progress and PRs all read the device copy so they work offline, and that copy
+ * starts empty on a new phone or after cleared storage. A merge by id is always safe:
+ * whatever the server has is synced by definition, and events still waiting here (or
+ * turned away) are not on the server, so nothing local is overwritten with older news.
+ *
+ * ponytail: the whole log on every app load. Fine at a few thousand sets a year; fetch
+ * only what is newer than the last restore when that stops being cheap.
+ */
+export async function restore(fetchAll: () => Promise<Stored[]>): Promise<number> {
+  const user = currentUserId();
+  if (user === null || restored.has(user)) return 0;
+  const remote = await fetchAll();
+  await db.events.bulkPut(
+    remote.map((e) => ({
+      id: e.id,
+      type: e.type,
+      payload: e.payload,
+      // One timestamp format on the device, so ordering by the string stays correct.
+      client_ts: new Date(e.client_ts).toISOString(),
+      user_tz: e.user_tz,
+      synced_at: e.server_ts,
+      user,
+    })),
+  );
+  restored.add(user);
+  return remote.length;
 }

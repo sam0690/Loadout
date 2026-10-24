@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
-import { pending } from "@/lib/queue";
+import { pending, restore } from "@/lib/queue";
 import { keepSynced } from "@/lib/sync";
 import { OfflineIcon } from "./ui/icons";
 
@@ -26,7 +26,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const refresh = () => void pending().then((q) => setCount(q.length));
+    const refresh = () => {
+      void pending().then((q) => setCount(q.length));
+      // Once per account per load; a failure (offline) just tries again next tick.
+      void restore(api.listEvents).catch(() => {});
+    };
     refresh();
     const stop = keepSynced(async (events) => {
       const result = await api.postEvents(events);
