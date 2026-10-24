@@ -21,6 +21,9 @@ export interface QueuedEvent {
   /** Null until the server has acknowledged it. Rows are kept, not deleted, so a
    * successful flush is distinguishable from a queue that was never written to. */
   synced_at: string | null;
+  /** Set when the server turned this event away as malformed. Kept on the device, never
+   * resent: one bad event must not hold up every good one queued behind it. */
+  rejected?: string;
 }
 
 const db = new Dexie("loadout") as Dexie & {

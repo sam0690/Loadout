@@ -174,3 +174,21 @@ describe("keeping in sync", () => {
     expect(most).toBe(1);
   });
 });
+
+describe("a rejected event", () => {
+  it("is not resent, and does not hold up the events behind it", async () => {
+    const bad = await enqueue("set_logged", { exercise_id: "x0", reps: 10, rir: 2 });
+    await enqueue("set_logged", set("e", 10));
+    const post = vi.fn(async (events: unknown[]) => ({
+      stored: events.length - 1,
+      rejected: [{ id: bad.id, reason: "exercise_id: not a uuid" }],
+    }));
+    await flush(post);
+    expect(await pending()).toHaveLength(0);
+    expect((await db.events.get(bad.id))?.rejected).toBe("exercise_id: not a uuid");
+    expect((await db.events.get(bad.id))?.synced_at).toBeNull();
+
+    await flush(post);
+    expect(post).toHaveBeenCalledTimes(1); // nothing left to send
+  });
+});

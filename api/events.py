@@ -7,13 +7,14 @@ This is the only route in 2.1; the rest of the API surface is 2.2.
 """
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Annotated, Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from sqlalchemy.dialects.postgresql import insert
 
 from api.auth import CurrentUser
@@ -53,6 +54,47 @@ class Event(BaseModel):
         return v
 
 
+# What each payload must carry for the projection and the fatigue gate to read it. Checked
+# per event, so one malformed event is turned away on its own instead of failing the
+# batch: a client retries a whole failed batch, so a single bad event used to block every
+# good one queued behind it, forever. Extra keys are allowed (the client adds `slug`).
+class _Payload(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class SetLogged(_Payload):
+    exercise_id: uuid.UUID
+    reps: int = Field(ge=0, le=200)
+    rir: int = Field(ge=0, le=10)
+    load: Decimal | None = Field(default=None, ge=0, le=1000)
+    target_bottom: int | None = None
+    target_top: int | None = None
+
+
+class ExerciseSwapped(_Payload):
+    from_exercise_id: uuid.UUID
+    to_exercise_id: uuid.UUID
+
+
+class SessionClosed(_Payload):
+    day: date
+    sets_completed: int = Field(ge=0)
+
+
+PAYLOADS: dict[str, type[_Payload]] = {
+    "set_logged": SetLogged,
+    "exercise_swapped": ExerciseSwapped,
+    "workout_completed": SessionClosed,
+    "workout_abandoned": SessionClosed,
+    # feedback_submitted: nothing reads it until Phase 5, so its shape is not pinned yet.
+}
+
+
+class Rejected(BaseModel):
+    id: uuid.UUID
+    reason: str
+
+
 class Batch(BaseModel):
     events: Annotated[list[Event], Field(min_length=1, max_length=MAX_BATCH)]
 
@@ -61,6 +103,8 @@ class Accepted(BaseModel):
     received: int
     stored: int  # smaller than received when a retry replayed events we already had
     projected: int
+    # Turned away individually and not stored. The client stops resending these.
+    rejected: list[Rejected] = []
 
 
 def engine() -> sa.Engine:
@@ -75,15 +119,25 @@ def post_events(
     user_id: CurrentUser,
     db: Annotated[sa.Engine, Depends(engine)],
 ) -> Accepted:
-    rows = [
-        {
+    if len({e.id for e in batch.events}) != len(batch.events):
+        raise HTTPException(422, "duplicate event ids within one batch")
+
+    rows, rejected = [], []
+    for e in batch.events:
+        shape = PAYLOADS.get(e.type)
+        if shape is not None:
+            try:
+                shape.model_validate(e.payload)
+            except ValidationError as exc:
+                rejected.append(Rejected(id=e.id, reason=_first_error(exc)))
+                continue
+        rows.append({
             "id": e.id, "user_id": user_id, "type": e.type, "payload": e.payload,
             "client_ts": e.client_ts, "user_tz": e.user_tz,
-        }
-        for e in batch.events
-    ]
-    if len({r["id"] for r in rows}) != len(rows):
-        raise HTTPException(422, "duplicate event ids within one batch")
+        })
+
+    if not rows:
+        return Accepted(received=len(batch.events), stored=0, projected=0, rejected=rejected)
 
     with db.begin() as conn:
         # RETURNING rather than rowcount: a multi-values INSERT reports -1, and the
@@ -100,4 +154,12 @@ def post_events(
         # Microseconds of arithmetic, so it runs in the request rather than a job
         # (PRD §6, logging a set).
         projected = rebuild(conn, user_id)
-    return Accepted(received=len(rows), stored=stored, projected=projected)
+    return Accepted(
+        received=len(batch.events), stored=stored, projected=projected, rejected=rejected
+    )
+
+
+def _first_error(exc: ValidationError) -> str:
+    err = exc.errors()[0]
+    where = ".".join(str(p) for p in err["loc"]) or "payload"
+    return f"{where}: {err['msg']}"

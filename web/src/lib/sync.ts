@@ -1,4 +1,4 @@
-import { pending, markSynced } from "./queue";
+import { pending, markRejected, markSynced } from "./queue";
 
 export interface SyncResult {
   attempted: number;
@@ -17,17 +17,21 @@ const CHUNK = 50;
  * Events are only marked synced once the server has answered, so a crash mid-flush
  * re-sends rather than loses.
  */
-export async function flush(
-  post: (events: unknown[]) => Promise<{ stored: number }>,
-): Promise<SyncResult> {
+type Post = (
+  events: unknown[],
+) => Promise<{ stored: number; rejected?: { id: string; reason: string }[] }>;
+
+export async function flush(post: Post): Promise<SyncResult> {
   const queue = await pending();
   let stored = 0;
   for (let i = 0; i < queue.length; i += CHUNK) {
     const batch = queue.slice(i, i + CHUNK);
-    const body = batch.map(({ synced_at: _synced, ...event }) => event);
+    const body = batch.map(({ synced_at: _synced, rejected: _rejected, ...event }) => event);
     const result = await post(body);
     stored += result.stored;
-    await markSynced(batch.map((e) => e.id));
+    const turnedAway = new Set((result.rejected ?? []).map((r) => r.id));
+    await markSynced(batch.filter((e) => !turnedAway.has(e.id)).map((e) => e.id));
+    await markRejected(result.rejected ?? []);
   }
   return { attempted: queue.length, stored };
 }
@@ -45,7 +49,7 @@ export async function flush(
  * Returns a teardown.
  */
 export function keepSynced(
-  post: (events: unknown[]) => Promise<{ stored: number }>,
+  post: Post,
   everyMs: number,
 ): () => void {
   let running = false;

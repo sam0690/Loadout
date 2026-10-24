@@ -35,7 +35,11 @@ export async function pending(): Promise<QueuedEvent[]> {
   // Dexie cannot index null, so the filter is in memory. The queue is a session's worth
   // of sets; if that ever stops being true, store a 0/1 flag instead of a timestamp.
   const all = await db.events.orderBy("client_ts").toArray();
-  return all.filter((e) => e.synced_at === null);
+  return all.filter((e) => e.synced_at === null && e.rejected === undefined);
+}
+
+export async function markRejected(rejected: { id: string; reason: string }[]): Promise<void> {
+  await Promise.all(rejected.map(({ id, reason }) => db.events.update(id, { rejected: reason })));
 }
 
 export async function markSynced(ids: string[], at: Date = new Date()): Promise<void> {

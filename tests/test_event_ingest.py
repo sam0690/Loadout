@@ -341,3 +341,55 @@ def test_an_event_for_an_unknown_exercise_is_stored_but_not_projected(
             sa.select(exercise_state.c.exercise_id).where(exercise_state.c.user_id == USER)
         ).scalars().all()
     assert list(projected) == [a], "only the interpretable one reaches the projection"
+
+
+# --- one bad event does not block the rest -------------------------------------
+
+
+def test_a_malformed_event_is_rejected_alone_and_the_rest_are_stored(
+    client: TestClient, db: sa.Engine, two_exercises: tuple[uuid.UUID, uuid.UUID]
+) -> None:
+    """It used to 500 the whole batch, and the client resends a failed batch whole --
+    so one bad event blocked every good one queued behind it."""
+    good = a_set(two_exercises[0], 10, 2, "20", 0)
+    bad = a_set(two_exercises[0], 10, 2, "20", 1)
+    bad["payload"]["exercise_id"] = "x0"  # type: ignore[index]
+    got = client.post("/events", json={"events": [good, bad]})
+    assert got.status_code == 200, got.text
+    body = got.json()
+    assert body["stored"] == 1
+    assert [r["id"] for r in body["rejected"]] == [bad["id"]]
+    assert "exercise_id" in body["rejected"][0]["reason"]
+    with db.connect() as c:
+        stored = c.execute(sa.select(events.c.id).where(events.c.user_id == USER)).scalars().all()
+    assert [str(i) for i in stored] == [good["id"]]
+
+
+@pytest.mark.parametrize(
+    "type_, payload",
+    [
+        ("set_logged", {"exercise_id": str(uuid.uuid4()), "reps": "ten", "rir": 2}),
+        ("set_logged", {"exercise_id": str(uuid.uuid4()), "reps": 10, "rir": 2, "load": -5}),
+        ("exercise_swapped", {"from_exercise_id": str(uuid.uuid4())}),
+        ("workout_completed", {"day": "not a day", "sets_completed": 3}),
+        ("workout_abandoned", {"day": "2026-10-24", "sets_completed": -1}),
+    ],
+)
+def test_payloads_the_projection_cannot_read_are_rejected(
+    client: TestClient, type_: str, payload: dict[str, object]
+) -> None:
+    event = {
+        "id": str(uuid.uuid4()), "type": type_, "payload": payload,
+        "client_ts": START.isoformat(), "user_tz": TZ,
+    }
+    body = client.post("/events", json={"events": [event]}).json()
+    assert body["stored"] == 0 and len(body["rejected"]) == 1
+
+
+def test_feedback_payloads_are_not_pinned_yet(client: TestClient) -> None:
+    event = {
+        "id": str(uuid.uuid4()), "type": "feedback_submitted",
+        "payload": {"text": "left shoulder felt tweaky"},
+        "client_ts": START.isoformat(), "user_tz": TZ,
+    }
+    assert client.post("/events", json={"events": [event]}).json()["stored"] == 1

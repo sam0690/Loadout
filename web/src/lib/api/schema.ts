@@ -274,6 +274,11 @@ export interface components {
             stored: number;
             /** Projected */
             projected: number;
+            /**
+             * Rejected
+             * @default []
+             */
+            rejected: components["schemas"]["Rejected"][];
         };
         /** ArchetypeOut */
         ArchetypeOut: {
@@ -506,6 +511,16 @@ export interface components {
             days_per_week?: number | null;
             /** Session Minutes */
             session_minutes?: number | null;
+        };
+        /** Rejected */
+        Rejected: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reason */
+            reason: string;
         };
         /** RequestLink */
         RequestLink: {
