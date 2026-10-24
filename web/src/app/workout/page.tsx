@@ -176,7 +176,7 @@ function Workout() {
   async function finish(next: Outcome) {
     try {
       if (outcome === null && logged > 0) await closeSession(today, next, logged);
-      router.push("/today");
+      router.push(logged > 0 ? `/summary?day=${today}` : "/today");
     } catch {
       toast("Could not record that on this device.", "error");
     }

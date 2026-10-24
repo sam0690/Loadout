@@ -149,6 +149,15 @@ function Session({
       )}
 
       <CloseOut logged={logged} total={total} outcome={outcome} onClose={onClose} />
+      {outcome !== null && logged > 0 && (
+        <RowLink
+          href={`/summary?day=${session.day}`}
+          title="Session summary"
+          detail="Sets, volume and personal bests"
+          trailing="→"
+          className="mt-3"
+        />
+      )}
 
       <h2 className="label mt-10 mb-3">All exercises</h2>
       <div className="space-y-2">
