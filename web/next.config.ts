@@ -8,6 +8,7 @@ const config: NextConfig = {
     return [
       { source: "/plan", destination: "/today", permanent: true },
       { source: "/history", destination: "/progress", permanent: true },
+      { source: "/log/:id", destination: "/workout?exercise=:id", permanent: true },
     ];
   },
 };

@@ -123,6 +123,21 @@ export async function discard(id: string): Promise<void> {
   await db.events.delete(id);
 }
 
+/**
+ * A day's swaps, from → to, read back from the queue.
+ *
+ * The swap event is already the record of what replaced what, so a reload mid-workout
+ * restores the substitute from it rather than from a second copy of the same fact.
+ */
+export async function swapsOn(day: string): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const e of await db.events.orderBy("client_ts").toArray()) {
+    if (e.type !== "exercise_swapped" || localDay(new Date(e.client_ts)) !== day) continue;
+    out.set(String(e.payload.from_exercise_id), String(e.payload.to_exercise_id));
+  }
+  return out;
+}
+
 export type Outcome = "completed" | "abandoned";
 
 /**

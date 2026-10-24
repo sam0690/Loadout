@@ -82,7 +82,7 @@ export function ItemRow({ item, count }: { item: PlanItem; count: number }) {
   const load = displayLoad(item.load, readUnits());
   return (
     <RowLink
-      href={`/log/${item.exercise_id}`}
+      href={`/workout?exercise=${item.exercise_id}`}
       title={<span className="capitalize">{exerciseName(item)}</span>}
       detail={
         <>

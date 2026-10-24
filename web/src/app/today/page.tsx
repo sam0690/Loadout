@@ -190,7 +190,7 @@ function Hero({ item, started }: { item: PlanItem; started: boolean }) {
         variant="primary"
         full
         className="mt-5"
-        onClick={() => router.push(`/log/${item.exercise_id}`)}
+        onClick={() => router.push(`/workout?exercise=${item.exercise_id}`)}
       >
         {started ? "Continue workout" : "Start workout"}
       </Button>

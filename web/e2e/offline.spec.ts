@@ -75,7 +75,7 @@ test("a full session logs offline and flushes on reconnect", async ({
   // visited, so a page reached only by deep link has no chunks to fall back to.
   await page.goto("/today");
   await page.waitForLoadState("networkidle");
-  await page.goto("/log/ff9a6f91-62e1-5b57-852c-a2921d81e924");
+  await page.goto("/workout?exercise=ff9a6f91-62e1-5b57-852c-a2921d81e924");
   await expect(page.getByRole("heading")).toContainText("bodyweight squat");
 
   // --- the signal dies ----------------------------------------------------------

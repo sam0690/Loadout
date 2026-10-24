@@ -95,7 +95,7 @@ test("an occupied machine is swapped with no network", async ({
   );
   await page.goto("/today");
   await page.waitForLoadState("networkidle");
-  await page.goto(`/log/${occupied!.exercise_id}`);
+  await page.goto(`/workout?exercise=${occupied!.exercise_id}`);
   await expect(page.getByRole("heading")).toBeVisible();
 
   // --- someone is on the machine, and there is no signal down here ---------------
