@@ -5,8 +5,8 @@
 // cold navigation fails at the transport before any of our code runs.
 //
 // Deliberately not Workbox: this caches a handful of routes and gets out of the way.
-const CACHE = "loadout-shell-v2";
-const SHELL = ["/", "/plan", "/history", "/onboarding", "/settings"];
+const CACHE = "loadout-shell-v3";
+const SHELL = ["/", "/today", "/week", "/progress", "/onboarding", "/settings"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -48,9 +48,9 @@ self.addEventListener("fetch", (event) => {
           (await cache.match(request, { ignoreSearch: true }));
         if (hit) return hit;
         // A logger route is dynamic (/log/<id>) and will not be in the shell by name,
-        // so fall back to the plan shell, which is the page it was opened from.
+        // so fall back to the Today shell, which is the page it was opened from.
         if (request.mode === "navigate") {
-          const shell = await cache.match("/plan");
+          const shell = await cache.match("/today");
           if (shell) return shell;
         }
         throw new Error("offline and not cached");

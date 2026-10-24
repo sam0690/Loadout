@@ -15,7 +15,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(token() ? "/plan" : "/onboarding");
+    router.replace(token() ? "/today" : "/onboarding");
   }, [router]);
 
   return (

@@ -146,8 +146,8 @@ export default function Logger({
           Open your plan while online once, and the whole week — including the swaps —
           will be here next time.
         </p>
-        <Link href="/plan">
-          <Button variant="primary">Back to plan</Button>
+        <Link href="/today">
+          <Button variant="primary">Back to today</Button>
         </Link>
       </main>
     );
@@ -168,8 +168,8 @@ export default function Logger({
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5">
       <header className="flex items-start gap-3 pt-6">
         <Link
-          href="/plan"
-          aria-label="Back to plan"
+          href="/today"
+          aria-label="Back to today"
           className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-control text-ink-faint transition-colors duration-150 hover:bg-surface hover:text-ink"
         >
           <BackIcon />
@@ -288,7 +288,7 @@ export default function Logger({
           </div>
         )}
 
-        <Button full variant="ghost" onClick={() => router.push("/plan")}>
+        <Button full variant="ghost" onClick={() => router.push("/today")}>
           Done
         </Button>
 

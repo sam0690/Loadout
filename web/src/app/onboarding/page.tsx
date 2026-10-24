@@ -133,7 +133,7 @@ export default function Onboarding() {
         daysPerWeek: draft.days_per_week ?? DEFAULTS.daysPerWeek,
         sessionMinutes: draft.session_minutes ?? DEFAULTS.sessionMinutes,
       });
-      router.push("/plan");
+      router.push("/today");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not build a plan.");
       setStep("context");

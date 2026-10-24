@@ -2,7 +2,7 @@
   "name": "Loadout",
   "short_name": "Loadout",
   "description": "Training that fits the equipment you actually have.",
-  "start_url": "/plan",
+  "start_url": "/today",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0d1013",

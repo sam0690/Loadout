@@ -73,7 +73,7 @@ test("a full session logs offline and flushes on reconnect", async ({
   // Walk the route a user actually walks: the plan first, then into an exercise. This
   // matters offline as well as narratively -- the shell cache only holds what has been
   // visited, so a page reached only by deep link has no chunks to fall back to.
-  await page.goto("/plan");
+  await page.goto("/today");
   await page.waitForLoadState("networkidle");
   await page.goto("/log/ff9a6f91-62e1-5b57-852c-a2921d81e924");
   await expect(page.getByRole("heading")).toContainText("bodyweight squat");

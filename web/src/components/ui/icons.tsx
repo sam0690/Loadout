@@ -34,6 +34,25 @@ export function PlanIcon(p: Props) {
   );
 }
 
+export function WeekIcon(p: Props) {
+  return (
+    <Glyph {...p}>
+      <rect x="3" y="4.5" width="14" height="12" rx="2" />
+      <path d="M3 8.5h14M7 3v3M13 3v3" />
+    </Glyph>
+  );
+}
+
+/** A line that climbs. Progress is the e1RM going up. */
+export function ProgressIcon(p: Props) {
+  return (
+    <Glyph {...p}>
+      <path d="M3 15l4.5-4.5 3 3L17 7" />
+      <path d="M12.5 7H17v4.5" />
+    </Glyph>
+  );
+}
+
 export function HistoryIcon(p: Props) {
   return (
     <Glyph {...p}>

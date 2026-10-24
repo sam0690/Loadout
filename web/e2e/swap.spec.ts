@@ -93,7 +93,7 @@ test("an occupied machine is swapped with no network", async ({
     },
     [access_token, JSON.stringify(plan.payload)] as const,
   );
-  await page.goto("/plan");
+  await page.goto("/today");
   await page.waitForLoadState("networkidle");
   await page.goto(`/log/${occupied!.exercise_id}`);
   await expect(page.getByRole("heading")).toBeVisible();

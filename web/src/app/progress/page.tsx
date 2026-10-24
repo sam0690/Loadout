@@ -4,15 +4,22 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loggedSets, type LoggedSet } from "@/lib/queue";
 import { cachedPlan } from "@/lib/plan";
+import { analyse } from "@/lib/analysis";
+import { bmiFromProfile } from "@/lib/bmi";
+import { cachedProfile, refreshProfile } from "@/lib/profile";
+import type { Profile } from "@/lib/api/client";
+import { Analysis } from "@/components/Analysis";
+import { BodyMetrics } from "@/components/BodyMetrics";
 import { fromDay, localDay } from "@/lib/day";
 import { displayLoad, readUnits, type Units } from "@/lib/units";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RowSkeleton } from "@/components/ui/Skeleton";
 import { HistoryIcon } from "@/components/ui/icons";
 
 /**
+ * The numbers: this week against the plan, the trend, the body, then every set.
+ *
  * Everything logged on this device, newest first.
  *
  * Reads the local queue rather than the server: history has to work offline too, and
@@ -29,13 +36,24 @@ interface Day {
   unsynced: number;
 }
 
-export default function History() {
-  const [days, setDays] = useState<Day[] | null>(null);
+export default function Progress() {
+  const [sets, setSets] = useState<LoggedSet[] | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(cachedProfile);
   const units = readUnits();
 
   useEffect(() => {
-    void loggedSets().then((sets) => setDays(group(sets)));
+    void loggedSets().then(setSets);
+    void refreshProfile().then(setProfile);
   }, []);
+
+  const days = useMemo(() => (sets === null ? null : group(sets)), [sets]);
+  // The cached plan, not a fetch: this screen has to render offline like the rest.
+  const analysis = useMemo(() => {
+    if (sets === null) return null; // Also keeps localStorage out of the prerender.
+    const plan = cachedPlan();
+    return plan === null ? null : analyse(sets, plan, localDay());
+  }, [sets]);
+  const measurements = profile ? bmiFromProfile(profile) : null;
 
   const totals = useMemo(() => {
     if (!days) return null;
@@ -48,13 +66,26 @@ export default function History() {
   return (
     <AppShell width="max-w-2xl">
       <PageHeader
-        title="History"
+        title="Progress"
         meta={
           totals && totals.sets > 0
             ? `${totals.sets} set${totals.sets === 1 ? "" : "s"} across ${totals.sessions} session${totals.sessions === 1 ? "" : "s"}`
             : undefined
         }
       />
+
+      {analysis && <Analysis data={analysis} units={units} className="mb-10" />}
+
+      {measurements && (
+        <BodyMetrics
+          bmi={measurements}
+          bodyweightKg={profile?.bodyweight_kg == null ? null : Number(profile.bodyweight_kg)}
+          units={units}
+          className="mb-10"
+        />
+      )}
+
+      {days !== null && days.length > 0 && <h2 className="label mb-4">Log</h2>}
 
       {days === null && <RowSkeleton count={4} />}
 
@@ -64,8 +95,12 @@ export default function History() {
           title="Nothing logged yet"
           body="Every set you log lands here — the reps, the load and how close you were to failure — so you can see the numbers move week to week."
           action={
-            <Link href="/plan">
-              <Button variant="primary">Go to this week</Button>
+            <Link
+              href="/today"
+              className="inline-flex items-center justify-center rounded-control bg-accent px-5 font-display text-[1.125rem] font-extrabold tracking-[0.06em] text-accent-ink uppercase"
+              style={{ minHeight: "var(--tap)" }}
+            >
+              Go to today
             </Link>
           }
         />
@@ -74,7 +109,7 @@ export default function History() {
       {days?.map((entry) => (
         <section key={entry.day} className="mb-8">
           <div className="mb-2.5 flex items-baseline justify-between gap-3">
-            <h2 className="text-[0.8125rem] tracking-[0.08em] uppercase text-ink-faint">
+            <h2 className="label">
               {label(entry.day)}
             </h2>
             <span className="text-2xs text-ink-faint">

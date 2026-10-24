@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { cn } from "./ui/cn";
 import { SyncBadge } from "./Sync";
-import { HistoryIcon, PlanIcon, SettingsIcon } from "./ui/icons";
+import { PlanIcon, ProgressIcon, SettingsIcon, WeekIcon } from "./ui/icons";
 
 /**
  * The application frame. One nav, two layouts.
@@ -19,8 +19,9 @@ import { HistoryIcon, PlanIcon, SettingsIcon } from "./ui/icons";
  * competing with the primary control, and a single back affordance out.
  */
 const TABS = [
-  { href: "/plan", label: "Plan", Icon: PlanIcon },
-  { href: "/history", label: "History", Icon: HistoryIcon },
+  { href: "/today", label: "Today", Icon: PlanIcon },
+  { href: "/week", label: "Week", Icon: WeekIcon },
+  { href: "/progress", label: "Progress", Icon: ProgressIcon },
   { href: "/settings", label: "Settings", Icon: SettingsIcon },
 ] as const;
 
@@ -43,7 +44,7 @@ export function AppShell({
           aria-label="Main"
           className="sticky top-0 flex h-dvh flex-col px-3 py-6"
         >
-          <span className="px-3 pb-6 text-[0.9375rem] font-semibold tracking-[-0.01em] text-ink">
+          <span className="px-3 pb-6 font-display text-[1.5rem] font-extrabold tracking-[0.02em] text-ink uppercase">
             Loadout
           </span>
           <ul className="flex flex-col gap-1">
