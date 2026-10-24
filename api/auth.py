@@ -7,6 +7,7 @@ of no revocation.
 """
 
 import hashlib
+import hmac
 import logging
 import secrets
 import uuid
@@ -47,6 +48,12 @@ ACCEPTED = {"detail": "If that address can receive mail, a link is on its way."}
 
 class RequestLink(BaseModel):
     email: EmailStr
+
+
+class Credentials(BaseModel):
+    email: EmailStr
+    # The ceiling stops a megabyte "password" from buying a megabyte of scrypt work.
+    password: str = Field(min_length=8, max_length=256)
 
 
 class Verify(BaseModel):
@@ -98,6 +105,35 @@ def send_link(email: str, url: str) -> None:
     an abstraction with one implementation is the thing CLAUDE.md forbids.
     """
     log.info("magic_link email=%s url=%s", email, url)
+
+
+# scrypt from the standard library rather than a bcrypt/argon2 dependency: memory-hard,
+# salted, and already installed. n=2**14 is the stdlib's documented interactive setting.
+SCRYPT = {"n": 2**14, "r": 8, "p": 1, "dklen": 32}
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.scrypt(password.encode(), salt=salt, **SCRYPT)
+    return f"scrypt${salt.hex()}${digest.hex()}"
+
+
+def password_matches(password: str, stored: str) -> bool:
+    _, salt, digest = stored.split("$")
+    got = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), **SCRYPT)
+    return hmac.compare_digest(got.hex(), digest)
+
+
+# Checked against when the address is unknown, so a miss costs the same scrypt as a
+# wrong password and response time does not say which one it was.
+_DECOY = hash_password(secrets.token_hex(16))
+
+
+def issue_session(user_id: uuid.UUID) -> Session:
+    now = datetime.now(UTC)
+    expires = now + SESSION_TTL
+    claims = {"sub": str(user_id), "iat": int(now.timestamp()), "exp": int(expires.timestamp())}
+    return Session(access_token=jwt.encode(claims, jwt_secret(), ALGORITHM), expires_at=expires)
 
 
 def issue_token(conn: sa.Connection, user_id: uuid.UUID) -> str:
@@ -166,9 +202,47 @@ def verify(body: Verify, db: Annotated[sa.Engine, Depends(engine)]) -> Session:
             .where(magic_links.c.token_hash == row.token_hash)
             .values(consumed_at=now)
         )
-    expires = now + SESSION_TTL
-    claims = {"sub": str(row.user_id), "iat": int(now.timestamp()), "exp": int(expires.timestamp())}
-    return Session(access_token=jwt.encode(claims, jwt_secret(), ALGORITHM), expires_at=expires)
+    return issue_session(row.user_id)
+
+
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
+def signup(body: Credentials, db: Annotated[sa.Engine, Depends(engine)]) -> Session:
+    """Create an account with a password (D31).
+
+    An address that already has an account is refused, password or not: setting a
+    password on someone else's magic-link account would be taking it over.
+    """
+    email = body.email.strip()
+    user_id = uuid.uuid4()
+    with db.begin() as conn:
+        taken = conn.execute(
+            sa.select(users.c.id).where(sa.func.lower(users.c.email) == email.lower())
+        ).scalar_one_or_none()
+        if taken is not None:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, "an account with that email already exists"
+            )
+        conn.execute(
+            sa.insert(users).values(
+                id=user_id, email=email, password_hash=hash_password(body.password)
+            )
+        )
+    return issue_session(user_id)
+
+
+@router.post("/login")
+def login(body: Credentials, db: Annotated[sa.Engine, Depends(engine)]) -> Session:
+    """Unknown address, magic-link-only account and wrong password all answer the same."""
+    with db.connect() as conn:
+        row = conn.execute(
+            sa.select(users.c.id, users.c.password_hash).where(
+                sa.func.lower(users.c.email) == body.email.strip().lower()
+            )
+        ).one_or_none()
+    stored = row.password_hash if row is not None and row.password_hash else _DECOY
+    if not password_matches(body.password, stored) or row is None or not row.password_hash:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong email or password")
+    return issue_session(row.id)
 
 
 def current_user(

@@ -240,6 +240,8 @@ users = sa.Table(
     "users", metadata,
     sa.Column("id", UUID(as_uuid=True), primary_key=True),
     sa.Column("email", sa.Text, nullable=False),
+    # scrypt, salted, "scrypt$<salt hex>$<digest hex>". Null for magic-link accounts (D31).
+    sa.Column("password_hash", sa.Text, nullable=True),
     sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
               server_default=sa.func.now()),
 

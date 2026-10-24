@@ -397,3 +397,55 @@ def test_profile_values_are_never_logged(
     with caplog.at_level("DEBUG"):
         client.put("/auth/profile", headers=auth(token), json={"bodyweight_kg": "82.50"})
     assert "82.5" not in caplog.text
+
+
+# --- password sign-in (D31) ----------------------------------------------------
+
+PASSWORD = "correct horse battery"
+
+
+def test_signup_then_login_reaches_the_same_account(client: TestClient) -> None:
+    created = client.post("/auth/signup", json={"email": EMAIL, "password": PASSWORD})
+    assert created.status_code == 201, created.text
+    logged = client.post("/auth/login", json={"email": EMAIL.upper(), "password": PASSWORD})
+    assert logged.status_code == 200, logged.text
+    me = client.get("/auth/me", headers=auth(logged.json()["access_token"]))
+    assert me.json()["email"] == EMAIL
+
+
+def test_the_password_is_never_stored_in_the_clear(client: TestClient, db: sa.Engine) -> None:
+    client.post("/auth/signup", json={"email": EMAIL, "password": PASSWORD})
+    with db.connect() as c:
+        stored = c.execute(
+            sa.select(users.c.password_hash).where(users.c.email == EMAIL)
+        ).scalar_one()
+    assert PASSWORD not in stored and stored.startswith("scrypt$")
+
+
+def test_a_taken_address_is_refused_even_without_a_password(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    login(client, caplog)  # a magic-link account, no password
+    taken = client.post("/auth/signup", json={"email": EMAIL, "password": PASSWORD})
+    assert taken.status_code == 409
+
+
+def test_every_failed_login_looks_the_same(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    client.post("/auth/signup", json={"email": EMAIL, "password": PASSWORD})
+    login(client, caplog, "linkonly@example.com")
+    attempts = [
+        {"email": EMAIL, "password": "wrong password"},
+        {"email": "nobody@example.com", "password": PASSWORD},
+        {"email": "linkonly@example.com", "password": PASSWORD},
+    ]
+    answers = [client.post("/auth/login", json=a) for a in attempts]
+    assert {(r.status_code, r.text) for r in answers} == {
+        (401, '{"detail":"wrong email or password"}')
+    }
+
+
+def test_a_short_password_is_refused_at_the_boundary(client: TestClient) -> None:
+    short = client.post("/auth/signup", json={"email": EMAIL, "password": "short"})
+    assert short.status_code == 422

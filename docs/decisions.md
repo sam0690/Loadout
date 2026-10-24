@@ -682,3 +682,29 @@ nothing needing a bar; adding a chair and a table reduces that to `forearms, tra
 `minimal_apartment` reduces it to `forearms` and prescribes chin-ups, correctly, because
 that context owns a bar. Forearms and traps remain genuinely uncoverable without something
 to grip or load, and the app now says so rather than quietly omitting them.
+
+## D31 — Password sign-in alongside the magic link — APPLIED
+
+Amends D23. Magic-link delivery is still a log line, so every sign-in meant reading a
+token out of the server log. Until a mail provider is wired in, the app signs in with an
+email and password; the magic-link endpoints stay, and stay tested, for when it is.
+
+**Hashing is stdlib `hashlib.scrypt`**, salted per user, stored as
+`scrypt$<salt>$<digest>` in a nullable `users.password_hash` (migration 0008). No
+bcrypt/argon2 dependency: scrypt is memory-hard and already installed.
+
+**Sessions are unchanged.** Signup and login issue the same stateless JWT as
+`/auth/verify`, with the same 7-day lifetime and the same lack of revocation.
+
+**Every failed login answers the same** — unknown address, magic-link-only account, wrong
+password — and an unknown address is still checked against a decoy hash, so response time
+does not tell them apart either.
+
+**Signup refuses any taken address, with or without a password.** Setting a password on
+someone else's magic-link account would be taking it over. The cost is that signup
+reveals whether an address has an account (409); that is the normal trade for a sign-up
+form, and the magic-link endpoint keeps its no-enumeration guarantee.
+
+**Known gap, not built.** `/auth/login` has no rate limit or lockout, so it can be
+brute-forced. Acceptable on a local stack; required before this is reachable from the
+internet. Recorded rather than half-built, like D23's `/auth/request` gap.

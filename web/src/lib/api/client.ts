@@ -104,16 +104,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  requestLink: (email: string) =>
-    request<{ detail: string }>("/auth/request", {
+  // Password sign-in (D31). The magic-link endpoints still exist server-side.
+  signup: (email: string, password: string) =>
+    request<{ access_token: string }>("/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
     }),
 
-  verify: (linkToken: string) =>
-    request<{ access_token: string }>("/auth/verify", {
+  login: (email: string, password: string) =>
+    request<{ access_token: string }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ token: linkToken }),
+      body: JSON.stringify({ email, password }),
     }),
 
   me: () => request<{ id: string; email: string }>("/auth/me"),

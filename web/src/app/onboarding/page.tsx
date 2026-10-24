@@ -1,24 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError, api, setToken, token, type ProfilePatch } from "@/lib/api/client";
 import { generatePlan, type Preferences } from "@/lib/plan";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { RowButton } from "@/components/ui/Row";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ProfileFields } from "@/components/intake/ProfileFields";
 import { TrainingFields } from "@/components/intake/TrainingFields";
 
 /**
- * Sign in, then four questions, then a plan.
+ * Sign in or sign up with a password (D31), then four questions, then a plan.
  *
  * PRD §12 names onboarding friction as a real cost and it is not resolved lightly: every
  * question here either feeds the engine (goal, experience, sessions, length) or is
  * collected deliberately ahead of its consumer (D29). Nothing is asked twice and
  * everything has a default, so a user who taps straight through still gets a plan.
  */
-type Step = "email" | "sent" | "profile" | "training" | "context" | "generating";
+type Step = "account" | "profile" | "training" | "context" | "generating";
+type Mode = "signin" | "signup";
 
 const INTAKE: Step[] = ["profile", "training", "context"];
 
@@ -33,16 +35,15 @@ const DEFAULTS: Preferences = {
 
 export default function Onboarding() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("email");
+  const [step, setStep] = useState<Step>("account");
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
-  const [linkToken, setLinkToken] = useState("");
-  const [showPaste, setShowPaste] = useState(false);
+  const [password, setPassword] = useState("");
   const [draft, setDraft] = useState<ProfilePatch>({});
   const [archetypes, setArchetypes] = useState<Archetype[] | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const consumed = useRef(false);
 
   /**
    * Where a signed-in account belongs. Having a place means intake was finished once,
@@ -55,35 +56,9 @@ export default function Onboarding() {
     else setStep("profile");
   }, [router]);
 
-  const signIn = useCallback(async (value: string) => {
-    setBusy(true);
-    setError(null);
-    try {
-      const { access_token } = await api.verify(value);
-      setToken(access_token);
-      await resume();
-    } catch {
-      setError("That link has expired or has already been used. Ask for another.");
-      setStep("sent");
-      setShowPaste(true);
-    } finally {
-      setBusy(false);
-    }
-  }, [resume]);
-
   useEffect(() => {
-    // A verify link opened on this device carries the token in the query string. It
-    // always did -- it just never got used, which is why this screen used to ask people
-    // to copy a token out of an email and paste it back in.
-    const fromLink = new URLSearchParams(window.location.search).get("token");
-    if (fromLink && !consumed.current) {
-      consumed.current = true;
-      setStep("sent");
-      void signIn(fromLink);
-      return;
-    }
     if (token()) void resume();
-  }, [signIn, resume]);
+  }, [resume]);
 
   useEffect(() => {
     if (step !== "context" || archetypes !== null) return;
@@ -93,17 +68,23 @@ export default function Onboarding() {
       .catch(() => setArchetypes([]));
   }, [step, archetypes]);
 
-  async function send() {
+  async function submit() {
     setBusy(true);
     setError(null);
     try {
-      await api.requestLink(email);
-      setStep("sent");
+      const { access_token } =
+        mode === "signin" ? await api.login(email, password) : await api.signup(email, password);
+      setToken(access_token);
+      await resume();
     } catch (e) {
       setError(
-        e instanceof ApiError
-          ? "That address was not accepted. Check it and try again."
-          : "Could not reach Loadout. Check your connection.",
+        !(e instanceof ApiError)
+          ? "Could not reach Loadout. Check your connection."
+          : e.status === 401
+            ? "Wrong email or password."
+            : e.status === 409
+              ? "There is already an account with that email. Sign in instead."
+              : "Check the email, and use at least 8 characters for the password.",
       );
     } finally {
       setBusy(false);
@@ -162,65 +143,58 @@ export default function Onboarding() {
         {INTAKE.includes(step) && <Progress step={step} />}
       </header>
 
-      {step === "email" && (
+      {step === "account" && (
         <Section
           title="Training that fits the equipment you actually have."
           body="No app-store gym required. Tell us what you can reach and we build the week around it."
         >
-          <Field
-            label="Email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            hint="We send a sign-in link. There is no password to forget."
+          <SegmentedControl
+            label="Account"
+            value={mode}
+            options={[
+              { value: "signin", label: "Sign in" },
+              { value: "signup", label: "Create account" },
+            ]}
+            onChange={(next) => {
+              setMode(next);
+              setError(null);
+            }}
           />
-          <Button
-            variant="primary"
-            full
-            loading={busy}
-            disabled={!email.includes("@")}
-            onClick={send}
+          {/* A form, so Enter submits and password managers recognise the pair. */}
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submit();
+            }}
           >
-            Send me a link
-          </Button>
-        </Section>
-      )}
-
-      {step === "sent" && (
-        <Section
-          title={busy ? "Signing you in…" : "Check your mail"}
-          body={
-            busy
-              ? "One moment."
-              : `We sent a link to ${email || "your address"}. Open it on this device and you are in.`
-          }
-        >
-          {!busy && !showPaste && (
-            <Button variant="ghost" full onClick={() => setShowPaste(true)}>
-              Paste the token instead
+            <Field
+              label="Email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Field
+              label="Password"
+              type="password"
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              hint={mode === "signup" ? "At least 8 characters." : undefined}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              full
+              loading={busy}
+              disabled={!email.includes("@") || password.length < 8}
+            >
+              {mode === "signin" ? "Sign in" : "Create account"}
             </Button>
-          )}
-          {!busy && showPaste && (
-            <>
-              <Field
-                label="Sign-in token"
-                placeholder="Paste it here"
-                value={linkToken}
-                onChange={(e) => setLinkToken(e.target.value)}
-              />
-              <Button
-                variant="primary"
-                full
-                disabled={linkToken.length === 0}
-                onClick={() => signIn(linkToken)}
-              >
-                Sign in
-              </Button>
-            </>
-          )}
+          </form>
         </Section>
       )}
 
