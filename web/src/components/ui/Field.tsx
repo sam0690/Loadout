@@ -25,7 +25,7 @@ export function Field({ label, hint, error, unit, className, ...rest }: Props) {
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-[0.8125rem] text-ink-muted">
+      <label htmlFor={id} className="label block">
         {label}
       </label>
 

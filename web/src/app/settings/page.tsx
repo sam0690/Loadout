@@ -275,8 +275,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mb-10">
-      <h2 className="text-[0.8125rem] tracking-[0.08em] uppercase text-ink-faint">
+    <section className="mb-10 border-t border-line pt-6 first-of-type:border-t-0 first-of-type:pt-0">
+      <h2 className="font-display text-[1.5rem] leading-tight font-extrabold text-ink uppercase">
         {title}
       </h2>
       {note && (

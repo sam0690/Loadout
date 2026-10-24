@@ -44,13 +44,24 @@ export default function Onboarding() {
   const [error, setError] = useState<string | null>(null);
   const consumed = useRef(false);
 
+  /**
+   * Where a signed-in account belongs. Having a place means intake was finished once,
+   * so signing in again -- a new phone, a cleared browser -- goes to Today instead of
+   * walking the questions a second time and building a duplicate place.
+   */
+  const resume = useCallback(async () => {
+    const places = await api.listContexts().catch(() => []);
+    if (places.length > 0) router.replace("/today");
+    else setStep("profile");
+  }, [router]);
+
   const signIn = useCallback(async (value: string) => {
     setBusy(true);
     setError(null);
     try {
       const { access_token } = await api.verify(value);
       setToken(access_token);
-      setStep("profile");
+      await resume();
     } catch {
       setError("That link has expired or has already been used. Ask for another.");
       setStep("sent");
@@ -58,7 +69,7 @@ export default function Onboarding() {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [resume]);
 
   useEffect(() => {
     // A verify link opened on this device carries the token in the query string. It
@@ -71,8 +82,8 @@ export default function Onboarding() {
       void signIn(fromLink);
       return;
     }
-    if (token()) setStep("profile");
-  }, [signIn]);
+    if (token()) void resume();
+  }, [signIn, resume]);
 
   useEffect(() => {
     if (step !== "context" || archetypes !== null) return;
@@ -145,7 +156,7 @@ export default function Onboarding() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-10">
       <header className="pt-12 pb-8">
-        <p className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-ink">
+        <p className="font-display text-[1.5rem] font-extrabold tracking-[0.02em] text-ink uppercase">
           Loadout
         </p>
         {INTAKE.includes(step) && <Progress step={step} />}
@@ -330,15 +341,20 @@ function Section({
 function Progress({ step }: { step: Step }) {
   const index = INTAKE.indexOf(step);
   return (
-    <ol className="mt-4 flex gap-1.5" aria-label={`Step ${index + 1} of ${INTAKE.length}`}>
-      {INTAKE.map((name, i) => (
-        <li
-          key={name}
-          className={`h-1 flex-1 rounded-full transition-colors duration-150 ${
-            i <= index ? "bg-accent" : "bg-line"
-          }`}
-        />
-      ))}
-    </ol>
+    <div className="mt-5">
+      <p className="label mb-2">
+        Step {index + 1} of {INTAKE.length}
+      </p>
+      <ol className="flex gap-1.5" aria-hidden="true">
+        {INTAKE.map((name, i) => (
+          <li
+            key={name}
+            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+              i <= index ? "bg-accent" : "bg-raised"
+            }`}
+          />
+        ))}
+      </ol>
+    </div>
   );
 }

@@ -41,16 +41,19 @@ const LENGTHS = [30, 45, 60, 75, 90] as const;
 export function TrainingFields({ value, onChange }: Props) {
   return (
     <div className="space-y-7">
-      <SegmentedControl
-        label="What are you training for?"
-        value={value.goal ?? null}
-        options={GOALS}
-        onChange={(goal) => onChange({ goal })}
-        stacked
-      />
+      <div className="space-y-2.5">
+        <p className="label">What are you training for?</p>
+        <SegmentedControl
+          label="What are you training for?"
+          value={value.goal ?? null}
+          options={GOALS}
+          onChange={(goal) => onChange({ goal })}
+          stacked
+        />
+      </div>
 
       <div className="space-y-2.5">
-        <p className="text-[0.8125rem] text-ink-muted">How long have you been lifting?</p>
+        <p className="label">How long have you been lifting?</p>
         <SegmentedControl
           label="Experience"
           value={value.experience ?? null}
@@ -65,7 +68,7 @@ export function TrainingFields({ value, onChange }: Props) {
       </div>
 
       <div className="space-y-2.5">
-        <p className="text-[0.8125rem] text-ink-muted">Sessions a week</p>
+        <p className="label">Sessions a week</p>
         <SegmentedControl
           label="Sessions a week"
           value={value.days_per_week == null ? null : String(value.days_per_week)}
@@ -75,7 +78,7 @@ export function TrainingFields({ value, onChange }: Props) {
       </div>
 
       <div className="space-y-2.5">
-        <p className="text-[0.8125rem] text-ink-muted">Time per session</p>
+        <p className="label">Time per session</p>
         <SegmentedControl
           label="Time per session"
           value={value.session_minutes == null ? null : String(value.session_minutes)}
