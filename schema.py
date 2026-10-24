@@ -233,15 +233,53 @@ exercise_state = sa.Table(
 
 # --- Auth (2.2a) ------------------------------------------------------------------
 
+GOALS = ("strength", "hypertrophy")
+EXPERIENCE_LEVELS = ("beginner", "intermediate", "advanced")
+
 users = sa.Table(
     "users", metadata,
     sa.Column("id", UUID(as_uuid=True), primary_key=True),
     sa.Column("email", sa.Text, nullable=False),
     sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
               server_default=sa.func.now()),
+
+    # --- Profile. Every column nullable: an account exists before intake finishes, and a
+    # half-answered profile must not be a broken row (D29).
+    #
+    # Stored metric and canonical. Imperial is a display concern and never reaches here,
+    # because a unit that round-trips through the database is a unit that eventually
+    # round-trips wrong.
+    #
+    # ponytail: bodyweight is a single current value, not a series. It is genuinely
+    # time-varying and belongs in the event log the day something reads it over time —
+    # a `bodyweight_logged` event plus a projection, same shape as exercise_state. That
+    # day is when calisthenics progression lands (D29), not before.
+    sa.Column("birth_year", sa.SmallInteger),
+    sa.Column("height_cm", sa.SmallInteger),
+    sa.Column("bodyweight_kg", sa.Numeric(5, 2)),
+
+    # --- Training preferences. Unlike the three above these are live engine inputs:
+    # goal picks the rep range, experience picks the volume target off the landmarks,
+    # and the two session columns size the week. They live here rather than in the
+    # client so that regenerating from a second device produces the same plan.
+    sa.Column("goal", sa.Text),
+    sa.Column("experience", sa.Text),
+    sa.Column("days_per_week", sa.SmallInteger),
+    sa.Column("session_minutes", sa.SmallInteger),
+
     # Addresses are case-insensitive in practice, so "Sam@x.com" must not become a
     # second account. Same functional-unique trick as equipment_aliases.
     sa.Index("uq_users_lower_email", sa.text("lower(email)"), unique=True),
+    # NULL passes a CHECK, which is what lets intake fill these in any order.
+    sa.CheckConstraint(_in("goal", GOALS), name="ck_users_goal"),
+    sa.CheckConstraint(_in("experience", EXPERIENCE_LEVELS), name="ck_users_experience"),
+    # Bounds are sanity rails, not medical judgement: they exist to reject a typo'd
+    # 1900cm, not to tell anyone what a plausible body is.
+    sa.CheckConstraint("birth_year BETWEEN 1900 AND 2100", name="ck_users_birth_year"),
+    sa.CheckConstraint("height_cm BETWEEN 50 AND 280", name="ck_users_height_cm"),
+    sa.CheckConstraint("bodyweight_kg BETWEEN 20 AND 500", name="ck_users_bodyweight_kg"),
+    sa.CheckConstraint("days_per_week BETWEEN 1 AND 7", name="ck_users_days_per_week"),
+    sa.CheckConstraint("session_minutes BETWEEN 10 AND 300", name="ck_users_session_minutes"),
 )
 
 magic_links = sa.Table(

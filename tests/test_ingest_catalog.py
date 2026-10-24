@@ -124,11 +124,14 @@ def test_review_file_is_written_with_a_header(tmp_path: Path) -> None:
 
 
 def test_normalized_json_matches_what_was_loaded() -> None:
-    """The ingested half stays at 80; terminals are authored separately (D22)."""
+    """The ingested half stays at 80; terminals are authored separately (D22, D30)."""
     from ingest.normalize import NORMALIZED
     on_disk = json.loads(NORMALIZED.read_text())
     assert len(on_disk) == 80
-    assert len(full_catalog()) == 89
+    # 12 authored terminals: D22's nine, plus D30's inverted row, floor back extension
+    # and prone rear delt raise. Chair dips are not among them -- once "bench dips"
+    # correctly requires a chair the ingest supplies that exercise itself.
+    assert len(full_catalog()) == 92
 
 
 def test_a_row_dropped_from_the_selection_is_dropped_from_the_catalog(

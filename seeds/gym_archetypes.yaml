@@ -7,11 +7,23 @@
 # Slugs are the six named in PRD §7. Equipment is by slug and is validated on load, so a
 # typo here fails the seed rather than silently producing a thinner gym.
 
+- slug: bodyweight_only
+  name: No equipment
+  # A floor, and the furniture already in the room. D30: a chair and a table are modelled
+  # as equipment because they cost nothing, exist in every home, and between them carry
+  # real dips and a real inverted row -- which is the difference between a usable plan
+  # and one with no pulling in it. Someone in a genuinely bare room removes them from
+  # their context; that is what equipment_removed is for.
+  #
+  # Listed first because presets are ordered leanest-first (D27), and because this is the
+  # launch cohort: PRD §1 calls the minimal-equipment case the sharpest differentiator.
+  equipment: [chair, sturdy_table]
+
 - slug: minimal_apartment
   name: Apartment, minimal kit
   # D12 names this archetype as the bound for "every pattern reaches a terminal". It is
-  # the leanest context the generator is expected to produce a real plan for.
-  equipment: [resistance_bands, pull_up_bar, suspension_trainer]
+  # the leanest context with purchased kit; bodyweight_only is leaner still.
+  equipment: [resistance_bands, pull_up_bar, suspension_trainer, chair, sturdy_table]
 
 - slug: hotel
   name: Hotel gym

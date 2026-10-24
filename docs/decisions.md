@@ -409,7 +409,12 @@ training_context_loads (
 
 A row with both columns null asserts nothing and is a mistake, so a CHECK rejects it.
 
-## D22 — Hand-authored bodyweight terminals — APPLIED
+## D22 — Hand-authored bodyweight terminals — APPLIED, AMENDED BY D30
+
+> **Amended.** The seven gaps below were real and are closed. An eighth — `vertical_pull`
+> — was never in the list, because the catalog wrongly claimed a chin-up needs no
+> equipment. D12 had said pulling has no zero-equipment terminal and was right; D30
+> corrects the data, accepts the gap, and reports it to the user rather than hiding it.
 
 D12 recorded that seven movement patterns had no zero-equipment terminal, so a user with
 nothing got `NoSubstituteFound` for `calf_raise`, `elbow_flexion`, `horizontal_pull`,
@@ -566,3 +571,114 @@ scroll past a commercial gym to find their apartment.
 
 Onboarding now picks an archetype rather than a hardcoded list, which is the "one question
 instead of two hundred" §7 describes. Amendments stay a later, optional step.
+
+## D28 — Training context is last-used with a one-tap switch — APPLIED
+
+PRD §12 asks: prompt for the training context at session start, or infer it? It already
+leans — "defaulting to last-used with a one-tap switch is probably right" — and this
+settles it that way.
+
+Asking every session is friction on the one screen that must be fast; the logger is used
+mid-set, one-handed, and a question before the first tap is a question in the way.
+Geofencing would infer it correctly and needs location permission this app has no other
+use for, which is a bad trade for a cohort of eight.
+
+The last-used id lives in `localStorage` on the client, not on the account. Which place
+you are standing in is a property of the device in your hand, not of the user — a phone
+and a laptop can honestly disagree about it, and the server has no way to know which is
+right. `is_default` on the context stays what it was: the account-level fallback for a
+device that has not chosen yet.
+
+The switch appears on the plan screen only when there is more than one context, and
+switching regenerates, because a plan built from the wrong rack is not worth showing.
+
+## D29 — The profile is collected ahead of its consumers — APPLIED
+
+PRD §12 asks how much onboarding friction is acceptable before the first plan. This
+resolves it toward *more* questions, deliberately and against the cheaper option.
+
+Intake now asks seven things. Four of them — goal, experience, sessions per week, session
+length — are live engine inputs that `PlanRequest` has accepted since 2.2c and that the
+client had been hardcoding to `hypertrophy`/`intermediate`/`3 days`/`60 minutes`. Those
+are unambiguous wins: they cost four taps and they change the generated plan.
+
+The other three — birth year, height, bodyweight — are **stored and read by nothing**.
+No code in `engine/` references them. They are collected now so the profile exists when
+the engine wants it, which is a real cost paid against an uncertain return, and it is
+recorded here so a later reader does not mistake three unused columns for a bug.
+
+Bodyweight is the one with a consumer already waiting: press-ups, pull-ups and dips carry
+no load at all today, so `best_e1rm_estimate` and double progression silently do not
+apply to them. Wiring it up is an engine change with property tests, not a UI change, and
+it is the first thing that should happen to these columns.
+
+Two things are deliberately *not* asked. **Sex** is omitted because the volume landmarks
+(D11) are sex-neutral in this codebase, so nothing would consume it, and it is the most
+sensitive field on the form; it is trivial to add when the landmarks become sex-aware.
+**Goal weight and body composition** are omitted because this app prescribes training and
+has no business pointing anyone at a number on a scale. The body-shape question is asked
+as a training outcome — "get stronger" or "build muscle" — which is exactly the `Goal`
+enum the engine already honours, and which is the most it can honestly promise.
+
+Storage is metric and canonical; imperial is a display concern that never reaches the
+server. Bodyweight is a single current value rather than a series — it is genuinely
+time-varying and belongs in the event log the day something reads it over time, which is
+the same day the calisthenics work lands.
+
+## D30 — Household objects are equipment, and the generator says what it cannot reach — APPLIED
+
+Asked what happens to a user with no equipment, the generator was run against an empty
+equipment set. It returned a full 60-set plan whose largest single allocation was **six
+sets of chin-ups**, and which contained **no chest work at all**. Nothing reported either.
+
+CLAUDE.md's equipment-subset invariant passed throughout. It passed because the catalog
+was wrong, not because the behaviour was right — an invariant checked against bad data is
+worth nothing, which is the more general lesson.
+
+**One root cause, two symptoms.** `ingest/taxonomy.py` mapped the source's `"body only"`
+to no equipment. The source means "you lift your own bodyweight", not "no apparatus", so
+`chin_up`, `pullups`, `v_bar_pullup`, `bench_dips` and `dips_triceps_version` all entered
+the catalog claiming to need nothing. Two consequences, the second hidden by the first:
+
+1. A user with an empty room was prescribed chin-ups, and `pull_up_bar` — listed in the
+   `minimal_apartment` archetype since Phase 0 — was required by **no exercise at all**.
+2. Those mislabelled dips occupied the bodyweight tier-0 slots for `horizontal_press`
+   under `PER_PATTERN_CAP`, so the real push-ups lost their slot to them and sat in
+   `review.csv`. Chest therefore had no bodyweight exercise on *any* context, including
+   `minimal_apartment` — the archetype D12 names as the supported floor.
+
+Fixing the first frees the slots and the ingest supplies push-ups on its own. Apparatus
+rules now live beside `PATTERN_RULES` in the same keyword idiom, including one for the
+incline and decline variants: elevating either end of a push-up needs something to elevate
+onto, and without that rule the incline versions held the slots the flat push-up should.
+
+`loadable` was corrected in the same pass: apparatus that only holds the body up does not
+make a movement loadable, so a pull-up bar no more loads a pull-up than a bench loads a
+push-up. `resistance_bands` is deliberately excluded from that set even though the seed
+gives it no increments — whether bands are loadable is an open question in PRD §12 and
+answering it here would resolve it silently.
+
+**Household objects.** After the fix `vertical_pull` has no zero-equipment terminal, which
+is what D12 said from the start: pulling requires something to pull on.
+`seeds/exercise_terminals.yaml` had already named the answer in its own comments — *"an
+inverted row under a table is the honest answer and needs the catalog to model a table"*.
+So `chair`, `sturdy_table` and `dip_station` are equipment now. The first two cost nothing
+and are in every home, and between them carry a genuine inverted row and genuine dips.
+They sit in tier 1 beside the pull-up bar, not tier 3 with the barbells, and they hold the
+body without loading it. A new `bodyweight_only` archetype carries the chair and table;
+a genuinely bare room removes them, which is what `equipment_removed` is for.
+
+**Saying so.** `Plan` gained an `unreachable` tuple: the muscles no exercise the context
+can express will train. Raising was considered and rejected — a plan missing one muscle is
+still worth training — but returning it silently is the failure this decision exists to
+close. It is computed from the usable candidate set, so it means "your equipment cannot
+express this" and never "the time budget ran out". Two property tests assert it is
+*exactly* the set of muscles with no usable exercise, in both directions: a muscle missing
+from it is the silent hole, and a muscle wrongly in it tells a user to buy something they
+do not need.
+
+Measured after the change: a bare room reports `forearms, lats, traps` and prescribes
+nothing needing a bar; adding a chair and a table reduces that to `forearms, traps`;
+`minimal_apartment` reduces it to `forearms` and prescribes chin-ups, correctly, because
+that context owns a bar. Forearms and traps remain genuinely uncoverable without something
+to grip or load, and the app now says so rather than quietly omitting them.

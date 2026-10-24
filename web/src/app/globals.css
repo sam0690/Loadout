@@ -1,26 +1,141 @@
 @import "tailwindcss";
 
-/* One-handed, mid-set, possibly sweaty (build prompt 2.3). Everything below serves that:
-   a 56px minimum tap target rather than the 44px guideline, because the user is not
-   looking carefully; a dark ground because a gym at 6am is not a bright room; and no
-   modal anywhere, because a dialog you cannot dismiss with a thumb is a trap. */
+/* The use scene decides everything below, not category habit.
+ *
+ * This app is opened one-handed, mid-set, in a gym at 6am, often on a phone with a
+ * cracked screen and a sweaty thumb, frequently with no network at all. So: a dark
+ * ground because that room is not bright; a 56px tap floor rather than the 44px
+ * guideline because nobody is aiming carefully; no modal anywhere, because a dialog
+ * you cannot dismiss with a thumb is a trap.
+ *
+ * Dark-only is a decision, not an omission. There is no light palette because there is
+ * no light use scene, and a half-tuned second theme is worse than one committed one.
+ */
+
+@theme {
+  /* --- Neutrals. One cool ramp, even steps in OKLCH so the gaps read evenly rather
+   * than clumping the way hand-picked hex values do. */
+  --color-ground: oklch(0.17 0.008 256);
+  --color-surface: oklch(0.22 0.009 256);
+  --color-raised: oklch(0.27 0.010 256);
+  /* Nav and toolbars sit a shade cooler than content, so the frame reads as frame. */
+  --color-chrome: oklch(0.20 0.012 260);
+
+  --color-ink: oklch(0.97 0.003 256);
+  --color-ink-muted: oklch(0.78 0.008 256);
+  /* The floor for anything a user must actually read: 4.5:1 on --color-ground. */
+  --color-ink-faint: oklch(0.66 0.010 256);
+
+  --color-line: oklch(0.32 0.010 256);
+  --color-line-strong: oklch(0.42 0.012 256);
+
+  /* --- Accent. Spent only on the primary action, the current selection, and a
+   * completed set. Never on decoration. Deliberately a shade deeper and less candied
+   * than the stock fitness-app green. */
+  --color-accent: oklch(0.76 0.152 159);
+  --color-accent-hover: oklch(0.82 0.150 159);
+  --color-accent-quiet: oklch(0.32 0.055 159);
+  /* Text that sits on the accent. Near-black, not pure, so it doesn't vibrate. */
+  --color-accent-ink: oklch(0.18 0.020 159);
+
+  --color-danger: oklch(0.68 0.180 22);
+  --color-danger-quiet: oklch(0.30 0.070 22);
+  --color-warning: oklch(0.80 0.140 78);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+
+  /* Fixed rem steps at ~1.125, not fluid. Users view product UI at a consistent DPI,
+   * and a heading that shrinks inside a narrow column looks broken, not responsive. */
+  --text-2xs: 0.6875rem;
+
+  --radius-card: 0.875rem;
+  --radius-control: 0.75rem;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 :root {
+  /* Larger than the 44px guideline on purpose -- see the note at the top. */
   --tap: 3.5rem;
+  --tap-sm: 2.75rem;
 }
 
 html {
   color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: #0b0d10;
-  color: #e8eaed;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
-  /* A logged set must never be lost to an accidental text selection drag. */
-  user-select: none;
+  /* Every digit that can change mid-session -- reps, RIR, load, e1RM -- must not
+   * reflow as it counts up. Numbers are the product here. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* The surfaces we did not draw still belong to the design. Browser defaults for
+ * selection, the caret and the scrollbar are the cheapest tell that a page was
+ * assembled rather than built. */
+::selection {
+  background: var(--color-accent-quiet);
+  color: var(--color-ink);
+}
+
+:root {
+  scrollbar-color: var(--color-line-strong) transparent;
+  scrollbar-width: thin;
+  accent-color: var(--color-accent);
+  caret-color: var(--color-accent);
+}
+
+/* One focus ring, everywhere, and only for keyboard users. There was none at all
+ * before this, which made the whole app unusable without a pointer. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 button {
   min-height: var(--tap);
+  /* Kills the double-tap-to-zoom delay without disabling zoom itself. The viewport
+   * previously set maximumScale=1 to get this, which also blocked pinch-zoom for
+   * everyone who needs it -- a WCAG 1.4.4 failure in exchange for a 300ms win. */
   touch-action: manipulation;
+}
+
+/* Scoped to the controls that need it rather than to <body>. A logged set must not be
+ * lost to an accidental selection drag, but that is no reason to make the entire app's
+ * text unselectable. */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The one authored moment in the app. Toasts arrive from where the thumb is, rise a
+ * few pixels and settle -- exponential ease-out from an already-visible default, so a
+ * dropped frame degrades to "it appeared" rather than to a broken animation. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

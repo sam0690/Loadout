@@ -15,8 +15,22 @@ export type ContextIn = components["schemas"]["ContextIn"];
 export type PlanOut = components["schemas"]["PlanOut"];
 export type JobStatus = components["schemas"]["JobStatus"];
 export type PlanRequest = components["schemas"]["PlanRequest"];
+export type Goal = components["schemas"]["Goal"];
+export type Experience = components["schemas"]["Experience"];
+/** What the server returns: bodyweight arrives as a decimal string, not a float. */
+export type Profile = components["schemas"]["Profile-Output"];
+/** What we send: a written key means "set this", an absent key means "leave it". */
+export type ProfilePatch = components["schemas"]["Profile-Input"];
 
 export type PlanPayload = {
+  /**
+   * Muscles the active context's equipment cannot train at all (D30).
+   *
+   * Optional because plans already cached in localStorage predate the field. Absent is
+   * not the same as empty: absent means "this plan was generated before the engine could
+   * tell us", empty means "your kit covers everything".
+   */
+  unreachable?: string[];
   sessions: {
     day: string;
     items: {
@@ -84,6 +98,12 @@ export const api = {
 
   me: () => request<{ id: string; email: string }>("/auth/me"),
 
+  profile: () => request<Profile>("/auth/profile"),
+
+  // Merges: only the keys present are written, so intake can save a screen at a time.
+  saveProfile: (body: ProfilePatch) =>
+    request<Profile>("/auth/profile", { method: "PUT", body: JSON.stringify(body) }),
+
   listContexts: () => request<ContextOut[]>("/contexts"),
 
   archetypes: () =>
@@ -93,6 +113,9 @@ export const api = {
 
   createContext: (body: ContextIn) =>
     request<ContextOut>("/contexts", { method: "POST", body: JSON.stringify(body) }),
+
+  deleteContext: (id: string) =>
+    request<void>(`/contexts/${id}`, { method: "DELETE" }),
 
   requestPlan: (body: PlanRequest) =>
     request<{ job_id: string }>("/plans", { method: "POST", body: JSON.stringify(body) }),

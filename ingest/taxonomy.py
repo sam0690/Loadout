@@ -119,6 +119,47 @@ BENCH_MARKERS = ("bench press", "lying", "incline", "decline", "seated", "supine
 INCLINE_MARKERS = ("incline", "decline", "preacher")
 
 
+# The source's "body only" means "you lift your own bodyweight", NOT "no apparatus".
+# A pull-up needs a bar; a dip needs something to dip on. Without this the catalog hands a
+# user with an empty room six sets of chin-ups, and `pull_up_bar` ends up required by no
+# exercise at all -- which is how it sat in the minimal_apartment archetype buying nothing.
+#
+# First match wins, so order matters: "bench dip" must beat the bare "dip" rule, exactly
+# as "leg press" must beat "press" in PATTERN_RULES.
+APPARATUS_RULES: list[tuple[tuple[str, ...], tuple[str, ...]]] = [
+    (("bench dip", "chair dip", "tricep dip"), ("chair",)),
+    # Elevating either end of a push-up needs something to elevate onto. Without this the
+    # incline variants hold the bodyweight slots and the plain floor push-up -- the one
+    # exercise a bare room is definitely capable of -- never reaches the catalog.
+    (("incline push", "decline push", "feet elevated", "elevated push"), ("chair",)),
+    (("pull-up", "pullup", "pull up", "chin-up", "chinup", "chin up",
+      "muscle-up", "muscle up"), ("pull_up_bar",)),
+    (("inverted row", "australian pull"), ("sturdy_table",)),
+    (("dip",), ("dip_station",)),
+]
+
+
+def apparatus_for(name_lower: str) -> tuple[str, ...]:
+    """The apparatus a movement needs regardless of what the source claims."""
+    for keywords, required in APPARATUS_RULES:
+        if any(k in name_lower for k in keywords):
+            return required
+    return ()
+
+
+# Equipment that holds the body up but adds no load of its own, so an exercise using only
+# these still progresses by difficulty_step rather than by weight (PRD §8): a bar does not
+# make a pull-up loadable.
+#
+# resistance_bands is deliberately absent even though the seed gives it no increments.
+# Whether bands are loadable is an open question in PRD §12, and answering it here would
+# resolve it silently.
+BODY_SUPPORT = frozenset({
+    "bodyweight", "flat_bench", "adjustable_bench", "pull_up_bar",
+    "suspension_trainer", "chair", "sturdy_table", "dip_station",
+})
+
+
 # A derived pattern and the source's own primary muscle have to agree. When they do not,
 # one of the two is wrong and we cannot tell which — a hybrid the name rules mis-sorted
 # ("Push Up to Side Plank"), or a source mislabel ("Cable Deadlifts", tagged quads).
@@ -145,7 +186,11 @@ PATTERN_MUSCLES = {
 # option. Selection spans these within each pattern: a pattern with only bodyweight rows
 # has nothing to downgrade *from*, and one with only machines never reaches a terminal.
 EQUIPMENT_TIERS: list[tuple[int, set[str]]] = [
-    (1, {"resistance_bands", "pull_up_bar", "suspension_trainer"}),
+    # Tier 1 is "apparatus that holds the body and adds no load". A chair and a table
+    # belong here beside the pull-up bar: they are one step up from the bare floor, not
+    # peers of a barbell, and tier() would otherwise sort them to 3 with the machines.
+    (1, {"resistance_bands", "pull_up_bar", "suspension_trainer",
+         "chair", "sturdy_table", "dip_station"}),
     (2, {"dumbbells", "kettlebell"}),
 ]
 BENCHES = {"flat_bench", "adjustable_bench"}

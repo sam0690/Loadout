@@ -13,6 +13,16 @@
 # a good exercise, and the right long-term fix is a catalog that admits a doorway or a
 # table as equipment rather than pretending the floor substitutes for a bar.
 #
+# That fix has since landed (D30). `chair` and `sturdy_table` are real equipment now, and
+# the entry at the bottom of this file uses them: an inverted row under a table is a
+# genuine horizontal pull, which is what the note above was asking for. The two weak
+# entries stay because they are still the terminal for a user who has neither -- but the
+# generator now reports what a context cannot reach rather than quietly omitting it, so a
+# weak terminal is a fallback rather than a lie.
+#
+# An entry may name apparatus in `equipment`, but only apparatus that holds the body up.
+# Anything loadable is refused by the loader: a terminal progresses by difficulty.
+#
 # difficulty is within-pattern (PRD §7), so these sit at the bottom of their own chain.
 
 - slug: bodyweight_standing_calf_raise
@@ -101,4 +111,45 @@
   # ? WEAK. Same problem as the curl: the side delt needs external resistance and an arm
   # ? weighs too little. Included so the pattern has a terminal at all, not because it is
   # ? good programming.
+  weak: true
+
+# --- Household apparatus (D30) -----------------------------------------------
+#
+# A chair and a table cost nothing and are in every home, which is exactly why modelling
+# them was worth it: they turn the two weakest terminals above into fallbacks rather than
+# the only option.
+
+- slug: inverted_row_under_table
+  name: Inverted Row Under a Table
+  movement_pattern: horizontal_pull
+  primary_muscles: [lats]
+  secondary_muscles: [upper_back, biceps, rear_delts]
+  equipment: [sturdy_table]
+  difficulty: 3
+  unilateral: false
+  # The exercise the honesty note above was asking for. Lie under a sturdy table, grip
+  # the edge, row. It is a real horizontal pull against a real fraction of bodyweight,
+  # and difficulty scales with foot position rather than with load.
+
+- slug: floor_back_extension
+  name: Floor Back Extension
+  movement_pattern: hinge
+  primary_muscles: [spinal_erectors]
+  secondary_muscles: [glutes, hamstrings]
+  difficulty: 2
+  unilateral: false
+  # Prone, lift chest and legs. Unarguable: spinal erectors are one of the few muscles
+  # that genuinely need nothing, and without this they were unreachable on any home
+  # context at all -- not merely on a bare floor.
+
+- slug: prone_rear_delt_raise
+  name: Prone Rear Delt Raise
+  movement_pattern: horizontal_pull
+  primary_muscles: [rear_delts]
+  secondary_muscles: [upper_back]
+  difficulty: 2
+  unilateral: false
+  # ? WEAK, for the same reason as the Y-T-W above: a limb's own weight is not much
+  # ? resistance for a small muscle. It exists so rear delts are reachable at all with
+  # ? nothing; a band is strictly better the moment the user has one.
   weak: true

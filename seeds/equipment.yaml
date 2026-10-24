@@ -68,6 +68,47 @@
     - {alias: "chin-up bar", source: generic}
     - {alias: "doorway bar", source: generic}
 
+# --- Household objects ---------------------------------------------------------------
+#
+# Not kit anyone buys, and modelled anyway. D12 recorded that pulling has no true
+# zero-equipment terminal, and seeds/exercise_terminals.yaml names the fix in its own
+# words: "an inverted row under a table is the honest answer and needs the catalog to
+# model a table". A chair and a table cost nothing, exist in every home, and between them
+# carry real horizontal pulling and real dips -- so the honest gap for someone who owns
+# nothing shrinks to lats alone.
+#
+# load_increments is [] for all three: they hold the body up, they do not load it.
+
+- slug: chair
+  class: bench
+  is_fixed_path: false
+  load_increments: []
+  movement_patterns: [horizontal_press, elbow_extension, lunge, calf_raise]
+  aliases:
+    - {alias: "sturdy chair", source: generic}
+    - {alias: "step", source: generic}
+    - {alias: "box", source: generic}
+
+- slug: sturdy_table
+  class: bar
+  is_fixed_path: false
+  load_increments: []
+  # A table is only ever something to row under; nothing else hangs off it safely.
+  movement_patterns: [horizontal_pull]
+  aliases:
+    - {alias: "table", source: generic}
+    - {alias: "desk", source: generic}
+
+- slug: dip_station
+  class: bar
+  is_fixed_path: false
+  load_increments: []
+  movement_patterns: [horizontal_press, elbow_extension]
+  aliases:
+    - {alias: "parallel bars", source: generic}
+    - {alias: "dip bars", source: generic}
+    - {alias: "parallettes", source: generic}
+
 - slug: flat_bench
   class: bench
   is_fixed_path: false

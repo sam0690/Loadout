@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- A loaded bar seen end-on: the same mark as the Plan tab, drawn heavier for an
+       icon. Padded to the middle 55% so it survives a circular maskable crop. -->
+  <rect width="512" height="512" rx="112" fill="#0d1013"/>
+  <g stroke="#42ce8d" stroke-width="26" stroke-linecap="round" fill="none">
+    <path d="M136 200v112M376 200v112"/>
+    <path d="M196 168v176M316 168v176"/>
+    <path d="M196 256h120"/>
+  </g>
+</svg>

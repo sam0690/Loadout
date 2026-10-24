@@ -132,11 +132,45 @@ def test_every_pattern_with_a_terminal_reaches_it(seeded: sa.Engine) -> None:
             assert all(not s.node.equipment for s in subs), row.slug
 
 
-def test_no_pattern_lacks_a_zero_equipment_terminal(seeded: sa.Engine) -> None:
-    """D22 closed the seven gaps D12 recorded. This is what stops them reopening."""
+# Pulling your own bodyweight vertically needs something above you to pull on. That is a
+# fact about the world, not a hole in the catalog, and D12 said so from the start.
+#
+# This list was empty until D30, and it was empty for the wrong reason: the source labels
+# a pull-up "body only", so the catalog claimed chin-ups needed no equipment and the gap
+# was hidden rather than absent. The test was green while asserting something false.
+KNOWN_GAPS = ["vertical_pull"]
+
+
+def test_only_vertical_pull_lacks_a_zero_equipment_terminal(seeded: sa.Engine) -> None:
+    """D22 closed the seven gaps D12 recorded; D30 revealed the eighth was never closed.
+
+    An equality rather than a subset check: a genuinely new gap must fail here instead of
+    hiding behind the one we have accepted.
+    """
     with seeded.connect() as c:
         rows, _ = read_catalog(c)
-    assert find_gaps(rows) == []
+    assert find_gaps(rows) == KNOWN_GAPS
+
+
+def test_household_apparatus_closes_the_pulling_gap(seeded: sa.Engine) -> None:
+    """The point of modelling a table (D30): lats stop being unreachable at home.
+
+    Vertical pull stays out of reach without a bar, but a horizontal pull under a table
+    trains the same muscle, which is the difference between a plan with no back work and
+    a plan with some.
+    """
+    with seeded.connect() as c:
+        rows, _ = read_catalog(c)
+    household = frozenset({"chair", "sturdy_table"})
+    reachable = {
+        r.pattern for r in rows if set(r.equipment) <= household
+    }
+    assert "horizontal_pull" in reachable
+    assert any(
+        set(r.equipment) <= household and r.pattern == "horizontal_pull"
+        and "table" in r.slug
+        for r in rows
+    )
 
 
 def test_an_unreachable_target_still_raises_rather_than_returning_nothing() -> None:

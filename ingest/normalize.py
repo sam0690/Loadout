@@ -86,7 +86,14 @@ def resolve_equipment(raw: str | None, name: str, pattern: str) -> tuple[list[st
     slugs = list(tx.EQUIPMENT.get(raw or "", []))
     if raw not in tx.EQUIPMENT:
         return [], f"unknown source equipment {raw!r}"
-    if any(b in low for b in tx.BENCH_MARKERS) and slugs:
+
+    # An explicit apparatus rule supersedes the generic bench heuristic below: "Bench
+    # Dips" needs a chair, not a chair *and* a bench. It also applies when the source
+    # said "body only" and left `slugs` empty, which is the whole point of it.
+    apparatus = tx.apparatus_for(low)
+    if apparatus:
+        slugs.extend(a for a in apparatus if a not in slugs)
+    elif any(b in low for b in tx.BENCH_MARKERS) and slugs:
         slugs.append(
             "adjustable_bench" if any(i in low for i in tx.INCLINE_MARKERS) else "flat_bench"
         )
@@ -127,7 +134,9 @@ def normalize_one(row: dict[str, Any]) -> tuple[Exercise | None, str | None]:
         difficulty=tx.DIFFICULTY_BY_LEVEL.get(row.get("level", ""), 5),
         unilateral=any(u in low for u in tx.UNILATERAL_MARKERS),
         # Bodyweight-only movements progress by difficulty_step, not by load (PRD §8).
-        loadable=bool(equipment) and equipment != ["flat_bench"],
+        # Apparatus that only holds the body up does not make a movement loadable -- a
+        # pull-up bar no more loads a pull-up than a bench loads a push-up.
+        loadable=bool(set(equipment) - tx.BODY_SUPPORT),
         source_id=row.get("id", ""),
     ), None
 

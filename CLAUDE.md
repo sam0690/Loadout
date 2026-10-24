@@ -102,9 +102,13 @@ Built and verified:
   generated plans against every invariant above.
 - **Phase 2** — append-only event log with projections, magic-link auth, contexts CRUD,
   RQ plan generation, and a Next.js PWA with an offline-first IndexedDB queue.
+- **Phase 2.5** — gym archetypes, occupied-equipment swap flow
+- **Product UI** — design tokens, component set, responsive shell, intake, settings.
+  Closes the gaps where the API supported something the UI never exposed: switching
+  training context (constraint 5), the four generator inputs the client hardcoded, and
+  `workout_completed` / `workout_abandoned`, which were defined and never emitted.
 
-D1–D25 in `docs/decisions.md` are settled.
+D1–D30 in `docs/decisions.md` are settled.
 
-One stated acceptance criterion is unverified: 2.3 asks for a full session logged with the
-network throttled to offline in a real browser. The queue and flush logic are tested
-directly; nobody has driven DevTools against a running stack.
+Every stated acceptance criterion is verified, 2.3's offline session included — both
+Playwright specs drive a real browser against a running stack.

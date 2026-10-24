@@ -100,6 +100,16 @@ class Session:
 @dataclass(frozen=True)
 class Plan:
     sessions: tuple[Session, ...]
+    # Muscles this context's equipment cannot train at all: no exercise in the catalog
+    # has an equipment set it can satisfy. Empty is the normal case.
+    #
+    # This exists because the alternative is worse than an error. A user with no kit was
+    # handed a plan containing no chest work and no way to tell that from a week where
+    # chest simply was not scheduled -- CLAUDE.md's "fail loudly, no silent defaults"
+    # applied to a whole muscle group. Raising would be wrong too: a plan missing one
+    # muscle is still worth training, so the generator returns it and says what is
+    # missing rather than refusing to answer.
+    unreachable: tuple[str, ...] = ()
 
     def weekly_hard_sets(self) -> dict[str, int]:
         counts: dict[str, int] = {}
@@ -187,10 +197,15 @@ def generate_plan(
             day_muscles[day].add(candidate.primary_muscle)
             added = True
 
+    # Computed from `usable`, so it answers "your equipment cannot express this" rather
+    # than "the time budget ran out" -- a muscle that simply lost the scoring contest is
+    # not unreachable and must not be reported as though it were.
+    trainable = {c.primary_muscle for c in usable}
     return Plan(
         sessions=tuple(
             Session(day=d, items=tuple(per_day[d])) for d in ordered_days if per_day[d]
-        )
+        ),
+        unreachable=tuple(sorted(m for m in landmarks if m not in trainable)),
     )
 
 

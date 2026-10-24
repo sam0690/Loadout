@@ -259,3 +259,72 @@ def test_consecutive_days_force_a_muscle_to_alternate() -> None:
     trained = sorted(s.day for s in plan.sessions)
     for a, b in zip(trained, trained[1:], strict=False):
         assert (b - a).days >= 2
+
+
+# --- coverage: what the equipment cannot express (D30) ------------------------
+
+
+@PLANS
+@given(**COMMON)
+def test_unreachable_is_exactly_the_muscles_with_no_usable_exercise(
+    days: list[date], catalog: list[Candidate], available_equipment: frozenset[str],
+    budget: int, experience: Experience, goal: Goal,
+) -> None:
+    """Not "was not programmed" -- "cannot be programmed with this equipment".
+
+    Asserted as an equality rather than a subset in both directions separately, because
+    the two failures are different bugs: a muscle missing from `unreachable` is the
+    silent hole this field exists to close, and a muscle wrongly in it would tell a user
+    to buy equipment they do not need.
+    """
+    plan = build(days, catalog, available_equipment, budget, experience, goal)
+    expected = {
+        m for m in LANDMARKS
+        if not any(
+            c.primary_muscle == m and c.equipment <= available_equipment for c in catalog
+        )
+    }
+    assert set(plan.unreachable) == expected
+
+
+@PLANS
+@given(**COMMON)
+def test_an_unreachable_muscle_is_never_prescribed(
+    days: list[date], catalog: list[Candidate], available_equipment: frozenset[str],
+    budget: int, experience: Experience, goal: Goal,
+) -> None:
+    plan = build(days, catalog, available_equipment, budget, experience, goal)
+    prescribed = {i.primary_muscle for s in plan.sessions for i in s.items}
+    assert prescribed.isdisjoint(plan.unreachable)
+
+
+def test_an_empty_rack_cannot_reach_anything_needing_equipment() -> None:
+    """The case that prompted this: a user with nothing, and an honest answer."""
+    catalog = [
+        Candidate(exercise_id=uuid.uuid4(), slug="floor_press", movement_pattern="horizontal_press",
+                  primary_muscle="chest", equipment=frozenset(), difficulty=3, loadable=False),
+        Candidate(exercise_id=uuid.uuid4(), slug="pull_up", movement_pattern="vertical_pull",
+                  primary_muscle="lats", equipment=frozenset({"pull_up_bar"}), difficulty=3,
+                  loadable=False),
+    ]
+    plan = generate_plan(
+        days=[date(2026, 8, 31)], catalog=catalog, available_equipment=frozenset(),
+        landmarks={"chest": LANDMARKS["chest"], "lats": LANDMARKS["lats"]},
+        time_budget_minutes=60,
+    )
+    assert plan.unreachable == ("lats",)
+    assert {i.slug for s in plan.sessions for i in s.items} == {"floor_press"}
+
+
+def test_a_full_rack_reaches_everything() -> None:
+    catalog = [
+        Candidate(exercise_id=uuid.uuid4(), slug="row", movement_pattern="horizontal_pull",
+                  primary_muscle="lats", equipment=frozenset({"sturdy_table"}), difficulty=3,
+                  loadable=False),
+    ]
+    plan = generate_plan(
+        days=[date(2026, 8, 31)], catalog=catalog,
+        available_equipment=frozenset({"sturdy_table"}),
+        landmarks={"lats": LANDMARKS["lats"]}, time_budget_minutes=60,
+    )
+    assert plan.unreachable == ()

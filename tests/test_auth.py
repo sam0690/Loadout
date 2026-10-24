@@ -315,3 +315,85 @@ def test_the_magic_link_actually_reaches_a_log_handler() -> None:
     import api.main  # noqa: F401  -- importing configures logging
 
     assert logging.getLogger("loadout.auth").isEnabledFor(logging.INFO)
+
+
+# --- the profile (D29) -------------------------------------------------------
+
+
+def test_profile_starts_empty_and_survives_a_round_trip(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    token = login(client, caplog)
+    assert client.get("/auth/profile", headers=auth(token)).json() == {
+        "birth_year": None, "height_cm": None, "bodyweight_kg": None,
+        "goal": None, "experience": None, "days_per_week": None,
+        "session_minutes": None,
+    }
+
+    written = client.put(
+        "/auth/profile",
+        headers=auth(token),
+        json={"birth_year": 1990, "height_cm": 178, "bodyweight_kg": "82.50",
+              "goal": "strength", "experience": "advanced",
+              "days_per_week": 4, "session_minutes": 45},
+    )
+    assert written.status_code == 200, written.text
+    assert client.get("/auth/profile", headers=auth(token)).json() == written.json()
+    assert written.json()["goal"] == "strength"
+
+
+def test_a_partial_write_leaves_the_other_answers_alone(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Intake saves one screen at a time, so screen two must not wipe screen one."""
+    token = login(client, caplog)
+    client.put("/auth/profile", headers=auth(token), json={"birth_year": 1990})
+    client.put("/auth/profile", headers=auth(token), json={"goal": "hypertrophy"})
+
+    got = client.get("/auth/profile", headers=auth(token)).json()
+    assert got["birth_year"] == 1990
+    assert got["goal"] == "hypertrophy"
+
+
+def test_an_explicit_null_clears_an_answer(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    token = login(client, caplog)
+    client.put("/auth/profile", headers=auth(token), json={"height_cm": 178})
+    client.put("/auth/profile", headers=auth(token), json={"height_cm": None})
+    assert client.get("/auth/profile", headers=auth(token)).json()["height_cm"] is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"height_cm": 1900},          # cm/mm confusion, the reason the rail exists
+        {"birth_year": 1800},
+        {"bodyweight_kg": 0},
+        {"days_per_week": 8},
+        {"session_minutes": 5},
+        {"goal": "aesthetics"},       # not in the engine's Goal enum
+        {"experience": "elite"},
+    ],
+)
+def test_out_of_range_answers_are_refused_at_the_boundary(
+    client: TestClient, caplog: pytest.LogCaptureFixture, body: dict[str, Any]
+) -> None:
+    token = login(client, caplog)
+    assert client.put("/auth/profile", headers=auth(token), json=body).status_code == 422
+
+
+def test_the_profile_needs_a_session(client: TestClient) -> None:
+    assert client.get("/auth/profile").status_code == 401
+    assert client.put("/auth/profile", json={"birth_year": 1990}).status_code == 401
+
+
+def test_profile_values_are_never_logged(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Health-adjacent data. The magic-link path already logs; this one must not."""
+    token = login(client, caplog)
+    caplog.clear()
+    with caplog.at_level("DEBUG"):
+        client.put("/auth/profile", headers=auth(token), json={"bodyweight_kg": "82.50"})
+    assert "82.5" not in caplog.text

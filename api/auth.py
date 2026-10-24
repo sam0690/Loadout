@@ -11,15 +11,17 @@ import logging
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import Annotated
 
 import jwt
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from db import DATABASE_URL, jwt_secret
+from engine.generator import Experience, Goal
 from schema import magic_links, users
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -60,6 +62,23 @@ class Session(BaseModel):
 class Me(BaseModel):
     id: uuid.UUID
     email: str
+
+
+class Profile(BaseModel):
+    """The intake answers. Every field optional, in both directions.
+
+    Bounds mirror the CHECK constraints in schema.py rather than trusting them: a 422 at
+    the boundary names the offending field, a constraint violation is a 500 that does not.
+    They are typo rails and nothing more.
+    """
+
+    birth_year: int | None = Field(default=None, ge=1900, le=2100)
+    height_cm: int | None = Field(default=None, ge=50, le=280)
+    bodyweight_kg: Decimal | None = Field(default=None, ge=20, le=500, decimal_places=2)
+    goal: Goal | None = None
+    experience: Experience | None = None
+    days_per_week: int | None = Field(default=None, ge=1, le=7)
+    session_minutes: int | None = Field(default=None, ge=10, le=300)
 
 
 def engine() -> sa.Engine:
@@ -184,3 +203,43 @@ def me(user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]) -> Me:
     if row is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "no such user")
     return Me(id=row.id, email=row.email)
+
+
+PROFILE_FIELDS = tuple(Profile.model_fields)
+
+
+def _profile(row: sa.Row[tuple[object, ...]]) -> Profile:
+    return Profile(**{f: getattr(row, f) for f in PROFILE_FIELDS})
+
+
+@router.get("/profile")
+def read_profile(user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]) -> Profile:
+    with db.connect() as conn:
+        row = conn.execute(sa.select(users).where(users.c.id == user_id)).one_or_none()
+    if row is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "no such user")
+    return _profile(row)
+
+
+@router.put("/profile")
+def write_profile(
+    body: Profile, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+) -> Profile:
+    """Merge, not replace.
+
+    Intake saves one screen at a time and settings edits one field at a time, so an
+    omitted key means "leave it alone" and an explicit null means "clear it". Full
+    replacement would make the second intake screen wipe the first.
+
+    Nothing here is logged. This is health-adjacent data and the only reason it is stored
+    at all is that a consumer is expected later (D29).
+    """
+    values = body.model_dump(exclude_unset=True)
+    with db.begin() as conn:
+        if conn.execute(sa.select(users.c.id).where(users.c.id == user_id)).one_or_none() is None:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "no such user")
+        if values:
+            conn.execute(sa.update(users).where(users.c.id == user_id).values(**values))
+        return _profile(
+            conn.execute(sa.select(users).where(users.c.id == user_id)).one()
+        )

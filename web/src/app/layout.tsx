@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { SyncProvider } from "@/components/Sync";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
   title: "Loadout",
@@ -9,19 +11,28 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0d10",
-  // No zoom-on-tap delay, and no accidental pinch while logging a set with one thumb.
+  // Matches --color-ground exactly. A theme colour that drifts from the body background
+  // shows as a seam between the browser chrome and the page.
+  themeColor: "#0d1013",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // No maximumScale. It was set to 1 to stop an accidental pinch mid-set, which also
+  // took pinch-zoom away from everyone who relies on it -- a WCAG 1.4.4 failure for a
+  // 300ms tap-delay win. `touch-action: manipulation` on buttons buys the same win
+  // without the cost.
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="mx-auto min-h-dvh max-w-md antialiased">
+      {/* No max-width here. Each surface decides its own measure: the logger stays a
+          thumb's width at every breakpoint because that is its entire premise, while
+          the plan and history earn real space on a laptop. */}
+      <body className="min-h-dvh antialiased">
         <ServiceWorker />
-        {children}
+        <SyncProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </SyncProvider>
       </body>
     </html>
   );

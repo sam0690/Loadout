@@ -5,8 +5,8 @@
 // cold navigation fails at the transport before any of our code runs.
 //
 // Deliberately not Workbox: this caches a handful of routes and gets out of the way.
-const CACHE = "loadout-shell-v1";
-const SHELL = ["/", "/plan", "/history", "/onboarding"];
+const CACHE = "loadout-shell-v2";
+const SHELL = ["/", "/plan", "/history", "/onboarding", "/settings"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

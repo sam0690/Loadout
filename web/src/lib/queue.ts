@@ -1,4 +1,5 @@
 import { db, type QueuedEvent } from "./db";
+import { localDay } from "./day";
 
 /** The user's own zone, resolved here rather than on the server (constraint 6). */
 export function userTimezone(): string {
@@ -53,5 +54,103 @@ export async function loggedToday(
       e.type === "set_logged" &&
       e.payload.exercise_id === exerciseId &&
       e.client_ts.slice(0, 10) === day,
+  );
+}
+
+/** One set as it was logged, with the payload's loose JSON narrowed once, here. */
+export interface LoggedSet {
+  id: string;
+  exerciseId: string;
+  /**
+   * The exercise's name, carried on the event itself.
+   *
+   * History has to render months after the plan that prescribed the set was replaced,
+   * and a log entry that cannot be read without joining against a catalog which has
+   * since moved is a weaker record than one that describes itself. Absent on events
+   * written before this, hence the null.
+   */
+  slug: string | null;
+  reps: number;
+  rir: number;
+  load: string | null;
+  at: string;
+  /** The user's own calendar day, not the UTC one (constraint 6). */
+  day: string;
+  synced: boolean;
+}
+
+function asLoggedSet(event: QueuedEvent): LoggedSet {
+  const p = event.payload;
+  return {
+    id: event.id,
+    exerciseId: String(p.exercise_id ?? ""),
+    slug: p.slug == null ? null : String(p.slug),
+    reps: Number(p.reps ?? 0),
+    rir: Number(p.rir ?? 0),
+    load: p.load == null ? null : String(p.load),
+    at: event.client_ts,
+    day: localDay(new Date(event.client_ts)),
+    synced: event.synced_at !== null,
+  };
+}
+
+/**
+ * Every set on this device, newest first.
+ *
+ * Reads the queue rather than the server because history has to work offline too, and
+ * the queue already holds every set including the ones not yet sent.
+ */
+export async function loggedSets(): Promise<LoggedSet[]> {
+  const all = await db.events.orderBy("client_ts").reverse().toArray();
+  return all.filter((e) => e.type === "set_logged").map(asLoggedSet);
+}
+
+/**
+ * Undo a set that has not left this device yet.
+ *
+ * The local queue is an outbox, not the log: an event still sitting here has never
+ * reached the server, so dropping it is not a mutation of anything append-only
+ * (constraint 2). Once it *has* synced the log owns it, and the honest correction is a
+ * compensating event rather than a delete — so this refuses, loudly, rather than
+ * quietly removing a row from a screen while the server keeps the set forever.
+ */
+export async function discard(id: string): Promise<void> {
+  const event = await db.events.get(id);
+  if (event === undefined) return;
+  if (event.synced_at !== null) {
+    throw new Error(`event ${id} has already synced and cannot be discarded`);
+  }
+  await db.events.delete(id);
+}
+
+export type Outcome = "completed" | "abandoned";
+
+/**
+ * Whether a day's session has already been closed out, so it is not closed twice.
+ *
+ * These two events are session-level, not per-exercise: the fatigue gate reads an
+ * abandoned workout as `(day, sets_completed)` and caps the next day's work at what was
+ * actually managed (`engine/progression/volume.py`). One exercise finishing is not a
+ * workout finishing, so this is recorded for the day rather than from the logger.
+ */
+export async function sessionOutcome(day: string): Promise<Outcome | null> {
+  const all = await db.events.orderBy("client_ts").reverse().toArray();
+  for (const event of all) {
+    if (event.type !== "workout_completed" && event.type !== "workout_abandoned") continue;
+    if (event.payload.day !== day) continue;
+    return event.type === "workout_completed" ? "completed" : "abandoned";
+  }
+  return null;
+}
+
+/** Close out a day's session. `sets_completed` is the evidence the fatigue gate uses. */
+export async function closeSession(
+  day: string,
+  outcome: Outcome,
+  setsCompleted: number,
+): Promise<void> {
+  await enqueue(
+    outcome === "completed" ? "workout_completed" : "workout_abandoned",
+    { day, sets_completed: setsCompleted },
   );
 }

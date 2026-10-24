@@ -9,7 +9,12 @@
 # Lines marked `# ?` are the generator's doubts. They are the point of this file:
 # correct or delete them rather than trusting them.
 #
-# 216 edges over 89 exercises.
+# 224 edges over 92 exercises.
+#
+# PATTERNS WITH NO ZERO-EQUIPMENT TERMINAL (D12). The catalog has no
+# bodyweight option for these, so a user with no equipment cannot be given
+# one. Hand-authoring a terminal for each is the fix:
+#   - vertical_pull
 
 
 # --- from 3_4_sit_up
@@ -78,29 +83,33 @@
   delta: 0
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 - from: alternating_floor_press
-  to: bench_press_with_bands
+  to: bench_dips
   type: equipment_downgrade
   delta: 0
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 
 # --- from back_flyes_with_bands
 - from: back_flyes_with_bands
+  to: push_up_wide
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: back_flyes_with_bands
+  to: pushups
+  type: equipment_downgrade
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
+- from: back_flyes_with_bands
   to: bench_dips
-  type: equipment_downgrade
-  delta: 0
-  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
-- from: back_flyes_with_bands
-  to: dips_triceps_version
-  type: equipment_downgrade
-  delta: 0
-  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
-- from: back_flyes_with_bands
-  to: bench_press_with_bands
   type: lateral_equivalent
   delta: 0
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
 
 # --- from band_good_morning
+- from: band_good_morning
+  to: floor_back_extension
+  type: equipment_downgrade
+  delta: -1
 - from: band_good_morning
   to: glute_kickback
   type: equipment_downgrade
@@ -119,6 +128,10 @@
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
 # --- from band_good_morning_pull_through
+- from: band_good_morning_pull_through
+  to: floor_back_extension
+  type: equipment_downgrade
+  delta: -1
 - from: band_good_morning_pull_through
   to: glute_kickback
   type: equipment_downgrade
@@ -300,24 +313,16 @@
 
 # --- from bench_dips
 - from: bench_dips
-  to: dips_triceps_version
-  type: lateral_equivalent
-  delta: 0
-  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
-  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
-
-# --- from bench_press_with_bands
-- from: bench_press_with_bands
-  to: bench_dips
+  to: push_up_wide
   type: equipment_downgrade
   delta: 0
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
-- from: bench_press_with_bands
-  to: dips_triceps_version
+- from: bench_dips
+  to: pushups
   type: equipment_downgrade
   delta: 0
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
-- from: bench_press_with_bands
+- from: bench_dips
   to: back_flyes_with_bands
   type: lateral_equivalent
   delta: 0
@@ -354,9 +359,10 @@
 
 # --- from bent_over_dumbbell_rear_delt_raise_with_head_on_bench
 - from: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
-  to: bodyweight_prone_ytw_raise
+  to: inverted_row_under_table
   type: equipment_downgrade
-  delta: -1
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 - from: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
   to: bent_over_two_dumbbell_row
   type: lateral_equivalent
@@ -413,9 +419,10 @@
 
 # --- from bent_over_two_dumbbell_row
 - from: bent_over_two_dumbbell_row
-  to: bodyweight_prone_ytw_raise
+  to: inverted_row_under_table
   type: equipment_downgrade
-  delta: -1
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 - from: bent_over_two_dumbbell_row
   to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
   type: lateral_equivalent
@@ -431,9 +438,10 @@
 
 # --- from bent_over_two_dumbbell_row_with_palms_in
 - from: bent_over_two_dumbbell_row_with_palms_in
-  to: bodyweight_prone_ytw_raise
+  to: inverted_row_under_table
   type: equipment_downgrade
-  delta: -1
+  delta: 0
+  # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 - from: bent_over_two_dumbbell_row_with_palms_in
   to: bent_over_dumbbell_rear_delt_raise_with_head_on_bench
   type: lateral_equivalent
@@ -464,6 +472,14 @@
   to: handstand_push_ups
   type: difficulty_step
   delta: 4
+
+# --- from bodyweight_prone_ytw_raise
+- from: bodyweight_prone_ytw_raise
+  to: prone_rear_delt_raise
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
 # --- from bodyweight_single_leg_calf_raise
 - from: bodyweight_single_leg_calf_raise
@@ -803,14 +819,6 @@
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
-# --- from dips_triceps_version
-- from: dips_triceps_version
-  to: bench_dips
-  type: lateral_equivalent
-  delta: 0
-  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
-  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
-
 # --- from double_kettlebell_push_press
 - from: double_kettlebell_push_press
   to: shoulder_press_with_bands
@@ -869,6 +877,12 @@
   delta: 0
   # ? downgrade is not easier (d3 -> d3); difficulty is seeded from the source's `level` and is coarse
 
+# --- from floor_back_extension
+- from: floor_back_extension
+  to: glute_kickback
+  type: difficulty_step
+  delta: 1
+
 # --- from freehand_jump_squat
 - from: freehand_jump_squat
   to: bodyweight_squat
@@ -889,6 +903,10 @@
 
 # --- from glute_kickback
 - from: glute_kickback
+  to: floor_back_extension
+  type: difficulty_step
+  delta: -1
+- from: glute_kickback
   to: single_leg_glute_bridge
   type: lateral_equivalent
   delta: 0
@@ -900,6 +918,16 @@
   to: bodyweight_pike_push_up
   type: difficulty_step
   delta: -4
+
+# --- from inverted_row_under_table
+- from: inverted_row_under_table
+  to: bodyweight_prone_ytw_raise
+  type: equipment_downgrade
+  delta: -1
+- from: inverted_row_under_table
+  to: prone_rear_delt_raise
+  type: equipment_downgrade
+  delta: -1
 
 # --- from kneeling_cable_crunch_with_alternating_oblique_twists
 - from: kneeling_cable_crunch_with_alternating_oblique_twists
@@ -1090,6 +1118,14 @@
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 
+# --- from prone_rear_delt_raise
+- from: prone_rear_delt_raise
+  to: bodyweight_prone_ytw_raise
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
 # --- from pullups
 - from: pullups
   to: chin_up
@@ -1099,6 +1135,22 @@
   # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
 - from: pullups
   to: v_bar_pullup
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from push_up_wide
+- from: push_up_wide
+  to: pushups
+  type: lateral_equivalent
+  delta: 0
+  # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand
+  # ? same equipment, so PRD §7's definition of lateral_equivalent (different equipment) does not strictly cover this. Generated because without it these nodes have no edges at all. Delete it, or widen the definition -- but decide, do not leave it
+
+# --- from pushups
+- from: pushups
+  to: push_up_wide
   type: lateral_equivalent
   delta: 0
   # ? equal difficulty may only mean both inherited the same `level`; these are the edges most worth checking by hand

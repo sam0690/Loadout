@@ -62,6 +62,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Profile */
+        get: operations["read_profile_auth_profile_get"];
+        /**
+         * Write Profile
+         * @description Merge, not replace.
+         *
+         *     Intake saves one screen at a time and settings edits one field at a time, so an
+         *     omitted key means "leave it alone" and an explicit null means "clear it". Full
+         *     replacement would make the second intake screen wipe the first.
+         *
+         *     Nothing here is logged. This is health-adjacent data and the only reason it is stored
+         *     at all is that a consumer is expected later (D29).
+         */
+        put: operations["write_profile_auth_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contexts/archetypes": {
         parameters: {
             query?: never;
@@ -382,6 +410,50 @@ export interface components {
             /** @default hypertrophy */
             goal: components["schemas"]["Goal"];
         };
+        /**
+         * Profile
+         * @description The intake answers. Every field optional, in both directions.
+         *
+         *     Bounds mirror the CHECK constraints in schema.py rather than trusting them: a 422 at
+         *     the boundary names the offending field, a constraint violation is a 500 that does not.
+         *     They are typo rails and nothing more.
+         */
+        "Profile-Input": {
+            /** Birth Year */
+            birth_year?: number | null;
+            /** Height Cm */
+            height_cm?: number | null;
+            /** Bodyweight Kg */
+            bodyweight_kg?: number | string | null;
+            goal?: components["schemas"]["Goal"] | null;
+            experience?: components["schemas"]["Experience"] | null;
+            /** Days Per Week */
+            days_per_week?: number | null;
+            /** Session Minutes */
+            session_minutes?: number | null;
+        };
+        /**
+         * Profile
+         * @description The intake answers. Every field optional, in both directions.
+         *
+         *     Bounds mirror the CHECK constraints in schema.py rather than trusting them: a 422 at
+         *     the boundary names the offending field, a constraint violation is a 500 that does not.
+         *     They are typo rails and nothing more.
+         */
+        "Profile-Output": {
+            /** Birth Year */
+            birth_year?: number | null;
+            /** Height Cm */
+            height_cm?: number | null;
+            /** Bodyweight Kg */
+            bodyweight_kg?: string | null;
+            goal?: components["schemas"]["Goal"] | null;
+            experience?: components["schemas"]["Experience"] | null;
+            /** Days Per Week */
+            days_per_week?: number | null;
+            /** Session Minutes */
+            session_minutes?: number | null;
+        };
         /** RequestLink */
         RequestLink: {
             /**
@@ -529,6 +601,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    read_profile_auth_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile-Output"];
+                };
+            };
+        };
+    };
+    write_profile_auth_profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Profile-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
