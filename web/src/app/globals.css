@@ -29,14 +29,14 @@
   --color-line: oklch(0.32 0.010 256);
   --color-line-strong: oklch(0.42 0.012 256);
 
-  /* --- Accent. Spent only on the primary action, the current selection, and a
-   * completed set. Never on decoration. Deliberately a shade deeper and less candied
-   * than the stock fitness-app green. */
-  --color-accent: oklch(0.76 0.152 159);
-  --color-accent-hover: oklch(0.82 0.150 159);
-  --color-accent-quiet: oklch(0.32 0.055 159);
+  /* --- Accent. Volt: one loud colour, spent only on the primary action, the current
+   * selection, a completed set, and the number the user is chasing. Never on
+   * decoration -- a loud accent used twice on a screen is no longer loud. */
+  --color-accent: oklch(0.90 0.190 125);
+  --color-accent-hover: oklch(0.94 0.170 125);
+  --color-accent-quiet: oklch(0.32 0.070 125);
   /* Text that sits on the accent. Near-black, not pure, so it doesn't vibrate. */
-  --color-accent-ink: oklch(0.18 0.020 159);
+  --color-accent-ink: oklch(0.17 0.030 125);
 
   --color-danger: oklch(0.68 0.180 22);
   --color-danger-quiet: oklch(0.30 0.070 22);
@@ -48,11 +48,24 @@
   /* Fixed rem steps at ~1.125, not fluid. Users view product UI at a consistent DPI,
    * and a heading that shrinks inside a narrow column looks broken, not responsive. */
   --text-2xs: 0.6875rem;
+  --text-display: 2.5rem;
+  --text-display--line-height: 1;
+  --text-hero: 4.5rem;
+  --text-hero--line-height: 0.9;
 
   --radius-card: 0.875rem;
   --radius-control: 0.75rem;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Inline because --font-barlow is set by next/font on <html> at runtime; a plain theme
+ * variable would resolve it too early. */
+@theme inline {
+  /* Condensed display face for numerals and headings: a load reads like a scoreboard,
+   * and condensed type fits "32.5" at hero size in a thumb-width column. Body copy
+   * stays system-ui -- it is read in sentences, and the platform face does that best. */
+  --font-display: var(--font-barlow), "Arial Narrow", system-ui, sans-serif;
 }
 
 :root {
@@ -105,6 +118,26 @@ button {
    * previously set maximumScale=1 to get this, which also blocked pinch-zoom for
    * everyone who needs it -- a WCAG 1.4.4 failure in exchange for a 300ms win. */
   touch-action: manipulation;
+}
+
+/* Headings speak in the display face. In the base layer so a page's own utilities
+ * still win -- unlayered CSS would beat every Tailwind class. */
+@layer base {
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+  }
+}
+
+/* The eyebrow over every section and stat: small, uppercase, tracked wide. */
+.label {
+  font-size: var(--text-2xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-ink-faint);
 }
 
 /* Scoped to the controls that need it rather than to <body>. A logged set must not be

@@ -316,7 +316,7 @@ function Section({
   return (
     <section className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-[1.5rem] leading-snug font-semibold tracking-[-0.02em] text-ink">
+        <h1 className="text-[2rem] leading-[1.05] text-ink">
           {title}
         </h1>
         <p className="text-[0.9375rem] leading-relaxed text-ink-faint">{body}</p>

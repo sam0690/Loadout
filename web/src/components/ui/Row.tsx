@@ -23,7 +23,7 @@ function body({ title, detail, trailing, selected }: Common) {
   return (
     <>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.9375rem] text-ink">{title}</span>
+        <span className="block truncate text-[0.9375rem] font-medium text-ink">{title}</span>
         {detail !== undefined && (
           <span
             className={cn(
@@ -38,7 +38,7 @@ function body({ title, detail, trailing, selected }: Common) {
       {trailing !== undefined && (
         <span
           className={cn(
-            "shrink-0 text-[0.9375rem]",
+            "shrink-0 font-display text-[1.125rem] font-semibold",
             selected ? "text-accent-ink/80" : "text-ink-faint",
           )}
         >

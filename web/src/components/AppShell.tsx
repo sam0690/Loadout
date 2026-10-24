@@ -125,7 +125,7 @@ export function PageHeader({
   return (
     <header className="flex items-start justify-between gap-4 pt-8 pb-6">
       <div className="min-w-0">
-        <h1 className="text-[1.5rem] leading-tight font-semibold tracking-[-0.02em] text-ink">
+        <h1 className="text-display text-ink">
           {title}
         </h1>
         {meta && <div className="mt-1 text-[0.875rem] text-ink-faint">{meta}</div>}

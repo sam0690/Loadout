@@ -1,8 +1,18 @@
 import type { Metadata, Viewport } from "next";
+import { Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { SyncProvider } from "@/components/Sync";
 import { ToastProvider } from "@/components/ui/Toast";
+
+// Self-hosted at build time, so it is served from our origin and the service worker
+// caches it like any other asset -- the display face survives airplane mode.
+const barlow = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["600", "800"],
+  variable: "--font-barlow",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Loadout",
@@ -24,7 +34,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={barlow.variable}>
       {/* No max-width here. Each surface decides its own measure: the logger stays a
           thumb's width at every breakpoint because that is its entire premise, while
           the plan and history earn real space on a laptop. */}

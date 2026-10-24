@@ -51,12 +51,12 @@ export function Stepper({
 
       <div className="flex-1 text-center">
         <div className="flex items-baseline justify-center gap-1">
-          <span className="text-[2rem] leading-none font-semibold tracking-[-0.02em] text-ink">
+          <span className="font-display text-display font-extrabold text-ink">
             {value}
           </span>
           {suffix && <span className="text-sm text-ink-faint">{suffix}</span>}
         </div>
-        <div className="mt-1.5 text-2xs tracking-[0.08em] uppercase text-ink-faint">
+        <div className="label mt-1.5">
           {label}
         </div>
         {hint && <div className="mt-0.5 text-2xs text-ink-faint/70">{hint}</div>}

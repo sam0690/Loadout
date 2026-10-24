@@ -14,7 +14,7 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-accent text-accent-ink font-semibold hover:bg-accent-hover active:bg-accent-hover",
+    "bg-accent text-accent-ink font-display text-[1.125rem] font-extrabold uppercase tracking-[0.06em] hover:bg-accent-hover active:bg-accent-hover",
   secondary:
     "bg-raised text-ink border border-line hover:border-line-strong active:bg-line",
   ghost: "text-ink-muted hover:text-ink hover:bg-surface active:bg-raised",
@@ -49,7 +49,7 @@ export function Button({
       style={compact ? { minHeight: "var(--tap-sm)" } : undefined}
       className={cn(
         "no-select relative inline-flex items-center justify-center gap-2 rounded-control px-4",
-        "text-[0.9375rem] transition-colors duration-150 ease-out-soft",
+        "text-[0.9375rem] transition-[color,background-color,border-color,transform] active:scale-[0.98] duration-150 ease-out-soft",
         "disabled:pointer-events-none disabled:opacity-40",
         full && "w-full",
         VARIANTS[variant],
