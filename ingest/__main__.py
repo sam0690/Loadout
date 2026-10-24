@@ -8,7 +8,7 @@ Each stage also runs on its own; see the module docstrings.
 import sqlalchemy as sa
 
 from db import DATABASE_URL
-from ingest import archetypes, edges, equipment, fetch, load, normalize
+from ingest import archetypes, edges, equipment, fetch, load, media, normalize
 
 
 def main() -> None:
@@ -23,6 +23,7 @@ def main() -> None:
         engine = sa.create_engine(DATABASE_URL)
         with engine.begin() as conn:
             print(f"loaded {edges.load_edges(conn)} edges from {edges.SEED.name}")
+    media.main()
 
 
 if __name__ == "__main__":

@@ -41,6 +41,9 @@ class Exercise:
     loadable: bool
     source_id: str = ""
     notes: list[str] = field(default_factory=list)
+    # Hand-authored entries only: a source exercise whose *photos* show the same movement
+    # (D32). Photos only -- its written steps describe a different exercise.
+    image_from: str = ""
 
 
 def slugify(name: str) -> str:

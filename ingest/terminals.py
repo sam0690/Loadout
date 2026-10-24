@@ -51,6 +51,7 @@ def read_terminals(path: Path = SEED) -> list[Exercise]:
                 loadable=False,
                 source_id="",
                 notes=notes,
+                image_from=e.get("image_from", ""),
             )
         )
     return out

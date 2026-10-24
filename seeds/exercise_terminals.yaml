@@ -24,8 +24,12 @@
 # Anything loadable is refused by the loader: a terminal progresses by difficulty.
 #
 # difficulty is within-pattern (PRD §7), so these sit at the bottom of their own chain.
+#
+# `image_from` borrows a source exercise's photos where they show the same movement
+# (D32). Left off wherever the nearest photo would show something different.
 
 - slug: bodyweight_standing_calf_raise
+  image_from: Rocking_Standing_Calf_Raise
   name: Standing Calf Raise
   movement_pattern: calf_raise
   primary_muscles: [calves]
@@ -42,6 +46,7 @@
   unilateral: true
 
 - slug: bodyweight_lunge
+  image_from: Bodyweight_Walking_Lunge
   name: Bodyweight Lunge
   movement_pattern: lunge
   primary_muscles: [quads]
@@ -50,6 +55,7 @@
   unilateral: true
 
 - slug: bodyweight_bulgarian_split_squat
+  image_from: Split_Squats
   name: Bulgarian Split Squat
   movement_pattern: lunge
   primary_muscles: [quads]
@@ -66,6 +72,7 @@
   unilateral: false
 
 - slug: bodyweight_sissy_squat
+  image_from: Weighted_Sissy_Squat
   name: Sissy Squat
   movement_pattern: knee_extension
   primary_muscles: [quads]
@@ -120,6 +127,7 @@
 # the only option.
 
 - slug: inverted_row_under_table
+  image_from: Inverted_Row
   name: Inverted Row Under a Table
   movement_pattern: horizontal_pull
   primary_muscles: [lats]
@@ -132,6 +140,7 @@
   # and difficulty scales with foot position rather than with load.
 
 - slug: floor_back_extension
+  image_from: Superman
   name: Floor Back Extension
   movement_pattern: hinge
   primary_muscles: [spinal_erectors]

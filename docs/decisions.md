@@ -708,3 +708,33 @@ form, and the magic-link endpoint keeps its no-enumeration guarantee.
 **Known gap, not built.** `/auth/login` has no rate limit or lockout, so it can be
 brute-forced. Acceptable on a local stack; required before this is reachable from the
 internet. Recorded rather than half-built, like D23's `/auth/request` gap.
+
+## D32 — Exercise photos and steps from the catalog source; video is a link out — APPLIED
+
+Amends the PRD §3 non-goal on form instruction. The non-goal exists because producing or
+licensing technique content "is a full-time job that will consume this project". That
+reason does not apply to content we already have: free-exercise-db, the Unlicense source
+the catalog is ingested from (`ingest/fetch.py`), ships two photos per exercise (start and
+end position) and numbered steps. Ingest used to drop both.
+
+**Shown, not produced.** `ingest/media.py` copies the photos into `web/public/exercises/`
+and writes `index.json` (slug → frames, steps). Bundled rather than hotlinked: served from
+our origin, cached by the service worker, so they render in a gym with no signal. About
+11 MB on disk, committed. Re-running ingest fetches only what is missing.
+
+**Two frames cross-faded in a loop stand in for video.** Start and end position, alternated,
+read as the movement. Under `prefers-reduced-motion` the first frame stands still.
+
+**Video is a link out, never embedded.** "Watch how" opens a YouTube search for the
+exercise. No curation, no embeds, no links to rot, and it is exactly the PRD's "link out
+to existing references; don't build a library".
+
+**Steps are behind a closed disclosure.** "What do I do" stays the product; "how" is one
+tap away for whoever wants it.
+
+**Hand-authored terminals borrow photos, never steps.** `image_from` in
+`seeds/exercise_terminals.yaml` names a source exercise whose photos show the same
+movement. Its written steps describe a different exercise (a walking lunge is not a
+stationary one), so a borrowed entry has frames and no steps. Entries without a faithful
+match (pike push-up, YTW, the self-resisted curl and raise) have no photo rather than a
+misleading one.
