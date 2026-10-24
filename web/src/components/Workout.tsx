@@ -61,11 +61,16 @@ export function SetList({ item, sets, units }: { item: Item; sets: LoggedSet[]; 
   return (
     <ol className="space-y-1.5" aria-label="Sets completed">
       {sets.map((set, i) => (
+        // A logged set replaces its dashed placeholder (new key, new mount), so it rises
+        // in from @starting-style: feedback that the tap landed, short enough for a set.
         <li
           key={set.id}
-          className="flex items-center gap-3 rounded-control bg-surface px-3.5 py-2.5"
+          className={cn(
+            "flex items-center gap-3 rounded-control bg-surface px-3.5 py-2.5",
+            "transition-[opacity,transform] duration-200 ease-out-soft starting:translate-y-1 starting:opacity-0",
+          )}
         >
-          <CheckIcon className="size-4 shrink-0 text-accent" />
+          <CheckIcon className="size-4 shrink-0 text-accent transition-transform duration-200 ease-out-soft starting:scale-90" />
           <span className="w-5 font-display text-[1.125rem] font-semibold text-ink-faint">{i + 1}</span>
           <span className="flex-1 font-display text-[1.125rem] font-semibold text-ink">
             {set.reps} reps{set.load ? ` · ${displayLoad(set.load, units)}` : ""}

@@ -232,7 +232,12 @@ function Workout() {
 
       <SlotBar items={items} doneCount={doneCount} index={index} onSelect={setIndex} />
 
-      <section className="mt-4">
+      {/* Keyed so a new exercise remounts and fades up rather than its name and numbers
+          swapping in place. No sideways slide: the strip jumps backwards as well. */}
+      <section
+        key={current.exercise_id}
+        className="mt-4 transition-[opacity,transform] duration-200 ease-out-soft starting:translate-y-1 starting:opacity-0"
+      >
         <Frames slug={current.slug} className="mb-4 h-44" />
         <h1 className="text-[2rem] leading-[1.05] text-ink">{current.slug.replaceAll("_", " ")}</h1>
         <p className="mt-3 flex items-baseline gap-2">

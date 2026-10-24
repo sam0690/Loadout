@@ -30,6 +30,7 @@ function SessionSummary() {
   const units = readUnits();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const shown = useCountUp(summary?.sets ?? 0);
 
   useEffect(() => {
     void loggedSets().then((sets) => setSummary(summarise(sets, day)));
@@ -60,7 +61,7 @@ function SessionSummary() {
       ) : (
         <>
           <h1 className="mt-2 flex items-baseline gap-3 text-ink">
-            <span className="font-display text-hero font-extrabold text-accent">{summary.sets}</span>
+            <span className="font-display text-hero font-extrabold text-accent">{shown}</span>
             <span className="text-display">{summary.sets === 1 ? "set" : "sets"}</span>
           </h1>
 
@@ -74,8 +75,13 @@ function SessionSummary() {
             <section className="mt-8">
               <h2 className="label mb-3">Personal bests</h2>
               <ul className="space-y-2">
-                {prs.map((e) => (
-                  <li key={e.exerciseId} className="rounded-card bg-accent px-4 py-3 text-accent-ink">
+                {prs.map((e, i) => (
+                  <li
+                    key={e.exerciseId}
+                    className="rounded-card bg-accent px-4 py-3 text-accent-ink transition-[opacity,transform] duration-300 ease-out-soft starting:translate-y-2 starting:opacity-0"
+                    // Staggered so each record lands on its own, after the count settles.
+                    style={{ transitionDelay: `${400 + i * 60}ms` }}
+                  >
                     <p className="font-display text-[1.25rem] leading-tight font-extrabold uppercase">
                       ▲ {e.name}
                     </p>
@@ -133,3 +139,29 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /** To the nearest 0.5: an estimate shown to two decimals claims precision it lacks. */
 const round = (n: number): number => Math.round(n * 2) / 2;
+
+/**
+ * The set count climbs to its total once, on arrival. Once per session is the one place
+ * a celebration earns its time; anything logged mid-set stays instant. Reduced motion
+ * shows the total straight away, which the CSS block cannot do for JS-driven numbers.
+ */
+function useCountUp(target: number, ms = 600): number {
+  const [n, setN] = useState(target);
+  useEffect(() => {
+    if (target === 0 || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setN(target);
+      return;
+    }
+    const start = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / ms);
+      setN(Math.round(target * (1 - (1 - p) ** 3))); // ease-out cubic: fast, then settles
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    setN(0);
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, ms]);
+  return n;
+}
