@@ -82,6 +82,11 @@ class PlanItem:
     target_reps: int
     target_rir: int
     load: Decimal | None
+    # Whether this context can put a weight on it: the catalog says it takes load *and*
+    # the equipment here can express one. Separate from `load`, which is None for anything
+    # never trained -- the engine does not guess a first working weight, so without this
+    # flag the client could not tell "bodyweight" from "first time, weigh in".
+    loadable: bool
     # Resolved at generation and shipped with the plan, never fetched on demand: the
     # occupied-machine swap happens mid-set in a gym basement with no signal (PRD §6).
     substitutes: tuple[Substitute, ...]
@@ -177,6 +182,9 @@ def generate_plan(
             if choice is None:
                 continue
             candidate, sets = choice
+            loadable = candidate.loadable and (
+                can_express_load is None or can_express_load(candidate)
+            )
             per_day[day].append(
                 PlanItem(
                     exercise_id=candidate.exercise_id,
@@ -186,7 +194,10 @@ def generate_plan(
                     sets=sets,
                     target_reps=reps,
                     target_rir=TARGET_RIR,
-                    load=(previous_loads or {}).get(candidate.exercise_id),
+                    # State is per exercise, not per context: a weight earned on the gym's
+                    # dumbbells must not ship to a context that cannot load this at all.
+                    load=(previous_loads or {}).get(candidate.exercise_id) if loadable else None,
+                    loadable=loadable,
                     substitutes=substitutes_for(candidate.exercise_id) if substitutes_for else (),
                 )
             )

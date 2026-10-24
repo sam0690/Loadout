@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../db";
 import { enqueue, loggedToday, markSynced, pending } from "../queue";
-import { flush } from "../sync";
+import { flush, keepSynced } from "../sync";
 
 beforeEach(async () => {
   await db.events.clear();
@@ -137,5 +137,40 @@ describe("flushing", () => {
     const post = vi.fn();
     await flush(post);
     expect(post).not.toHaveBeenCalled();
+  });
+});
+
+describe("keeping in sync", () => {
+  // Node has no window; the "online" listener only needs something to attach to.
+  beforeEach(() => {
+    vi.stubGlobal("window", new EventTarget());
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("sends a set logged mid-session without waiting for an online event", async () => {
+    const post = vi.fn(async (events: unknown[]) => ({ stored: events.length }));
+    const stop = keepSynced(post, 20);
+    await enqueue("set_logged", { exercise_id: "e", reps: 10, rir: 2 });
+    await vi.waitFor(async () => expect(await pending()).toHaveLength(0));
+    stop();
+    expect(post).toHaveBeenCalled();
+  });
+
+  it("never runs two flushes at once", async () => {
+    let inFlight = 0;
+    let most = 0;
+    const post = vi.fn(async (events: unknown[]) => {
+      most = Math.max(most, ++inFlight);
+      await new Promise((r) => setTimeout(r, 60)); // slower than the 10ms tick
+      inFlight--;
+      return { stored: events.length };
+    });
+    await enqueue("set_logged", { exercise_id: "e", reps: 10, rir: 2 });
+    const stop = keepSynced(post, 10);
+    await vi.waitFor(async () => expect(await pending()).toHaveLength(0));
+    stop();
+    expect(most).toBe(1);
   });
 });

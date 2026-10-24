@@ -5,6 +5,7 @@ The build prompt calls this the test that matters most in the project.
 
 import uuid
 from datetime import date, timedelta
+from decimal import Decimal
 
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
@@ -180,6 +181,50 @@ def test_a_plan_never_exceeds_the_weekly_target(
 
 
 # --- worked behaviour --------------------------------------------------------
+
+
+@PLANS
+@given(**COMMON, refuse=st.booleans())
+def test_loadable_means_the_catalog_and_the_context_both_agree(
+    days: list[date], catalog: list[Candidate], available_equipment: frozenset[str],
+    budget: int, experience: Experience, goal: Goal, refuse: bool,
+) -> None:
+    """An item is loadable exactly when its exercise is and the context can load it.
+
+    `refuse` stands in for a context whose kit has no load increments (bands, D30):
+    then nothing is loadable, however the catalog marks it.
+    """
+    by_id = {c.exercise_id: c for c in catalog}
+    plan = generate_plan(
+        days=days, catalog=catalog, available_equipment=available_equipment,
+        landmarks=LANDMARKS, time_budget_minutes=budget, experience=experience, goal=goal,
+        can_express_load=lambda c: not refuse,
+    )
+    for session in plan.sessions:
+        for item in session.items:
+            assert item.loadable == (by_id[item.exercise_id].loadable and not refuse)
+
+
+@PLANS
+@given(**COMMON, refuse=st.booleans())
+def test_an_item_carrying_a_load_is_always_loadable(
+    days: list[date], catalog: list[Candidate], available_equipment: frozenset[str],
+    budget: int, experience: Experience, goal: Goal, refuse: bool,
+) -> None:
+    """A prescribed weight on something the client will not let you weigh is a dead end.
+
+    Every exercise has history here, as if trained elsewhere: state is per exercise, so a
+    context that cannot load it must drop the weight rather than ship it.
+    """
+    loads = {c.exercise_id: Decimal("20") for c in catalog}
+    plan = generate_plan(
+        days=days, catalog=catalog, available_equipment=available_equipment,
+        landmarks=LANDMARKS, time_budget_minutes=budget, experience=experience, goal=goal,
+        previous_loads=loads, can_express_load=lambda c: not refuse,
+    )
+    for session in plan.sessions:
+        for item in session.items:
+            assert item.load is None or item.loadable
 
 
 def full_catalog() -> list[Candidate]:

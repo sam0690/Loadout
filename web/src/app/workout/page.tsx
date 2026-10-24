@@ -110,7 +110,9 @@ function Workout() {
     setReps(last?.reps ?? current.target_reps);
     setRir(last?.rir ?? current.target_rir);
     const start = last?.load ?? current.load;
-    setLoad(start === null ? null : Number(start));
+    // Nothing to start from on a first session: 0, and the user walks it up. A default
+    // weight here would be the client prescribing a load, which only the engine does.
+    setLoad(start !== null ? Number(start) : current.loadable ? 0 : null);
     setSwapping(false);
     window.history.replaceState(null, "", `/workout?exercise=${current.exercise_id}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -145,7 +147,8 @@ function Workout() {
         slug: current.slug,
         reps,
         rir,
-        load: load === null ? null : String(load),
+        // 0 on a loadable exercise means the weight was never entered, not lifted at 0.
+        load: load === null || load === 0 ? null : String(load),
         target_bottom: current.target_reps,
         target_top: current.target_reps,
       });
@@ -276,7 +279,13 @@ function Workout() {
             max={500}
             step={LOAD_STEP}
             suffix="kg"
-            hint={current.load !== null && Number(current.load) !== load ? `Prescribed ${prescribed}` : undefined}
+            hint={
+              current.load === null
+                ? "First time: set your weight"
+                : Number(current.load) !== load
+                  ? `Prescribed ${prescribed}`
+                  : undefined
+            }
           />
         )}
 

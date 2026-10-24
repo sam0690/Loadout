@@ -33,19 +33,39 @@ export async function flush(
 }
 
 /**
- * Flush now, and again whenever the browser thinks it is back online.
- * Returns a teardown so a component can stop listening.
+ * Flush now, on reconnect, and every `everyMs` while the app is open.
+ *
+ * Reconnect alone was not enough: a user who stays online through a whole workout never
+ * fires an "online" event, so their sets sat on the phone until the app was next opened
+ * from cold -- and every plan generated meanwhile was built without them. The interval
+ * reads the queue first, so an idle tick is one IndexedDB read and no request.
+ *
+ * One flush at a time. Overlap would only cost a duplicate send (the server dedupes on
+ * the client id), but a slow connection would otherwise stack a request per tick.
+ * Returns a teardown.
  */
-export function syncOnReconnect(
+export function keepSynced(
   post: (events: unknown[]) => Promise<{ stored: number }>,
+  everyMs: number,
 ): () => void {
+  let running = false;
   const run = () => {
-    void flush(post).catch(() => {
-      // Offline is the normal case, not an error. The queue keeps the events and the
-      // next online event tries again.
-    });
+    if (running) return;
+    running = true;
+    void flush(post)
+      .catch(() => {
+        // Offline is the normal case, not an error. The queue keeps the events and the
+        // next tick or online event tries again.
+      })
+      .finally(() => {
+        running = false;
+      });
   };
   run();
   window.addEventListener("online", run);
-  return () => window.removeEventListener("online", run);
+  const timer = setInterval(run, everyMs);
+  return () => {
+    window.removeEventListener("online", run);
+    clearInterval(timer);
+  };
 }

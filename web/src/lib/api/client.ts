@@ -42,6 +42,8 @@ export type PlanPayload = {
       target_reps: number;
       target_rir: number;
       load: string | null;
+      /** Absent on plans cached before it shipped; treat as "only if it has a load". */
+      loadable?: boolean;
       substitutes: { exercise_id: string; slug: string; equipment: string[] }[];
     }[];
   }[];

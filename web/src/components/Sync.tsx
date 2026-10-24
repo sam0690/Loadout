@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "@/lib/api/client";
 import { pending } from "@/lib/queue";
-import { syncOnReconnect } from "@/lib/sync";
+import { keepSynced } from "@/lib/sync";
 import { OfflineIcon } from "./ui/icons";
 
 /**
@@ -28,11 +28,11 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const refresh = () => void pending().then((q) => setCount(q.length));
     refresh();
-    const stop = syncOnReconnect(async (events) => {
+    const stop = keepSynced(async (events) => {
       const result = await api.postEvents(events);
       refresh();
       return result;
-    });
+    }, REFRESH_MS);
     const timer = setInterval(refresh, REFRESH_MS);
     return () => {
       stop();

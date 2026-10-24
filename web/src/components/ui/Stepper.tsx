@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { cn } from "./cn";
 
 /**
@@ -9,9 +10,8 @@ import { cn } from "./cn";
  * Typing a number with wet hands between sets is the single thing most likely to stop
  * someone logging at all, so the logging path contains no free-text input anywhere.
  *
- * ponytail: tap-per-increment, no hold-to-repeat. Fine while every value opens on the
- * prescribed number and moves by one or two taps; add press-and-hold the day someone
- * has to walk a load from 0 to 100.
+ * Press and hold repeats, speeding up: a first session opens the load at 0 (the engine
+ * does not guess a first weight), and walking that to 60 kg one tap at a time is 24 taps.
  */
 interface Props {
   label: string;
@@ -91,14 +91,46 @@ function Nudge({
   disabled: boolean;
   children: React.ReactNode;
 }) {
+  const timer = useRef<number | undefined>(undefined);
+  // The latest handler, so each repeat steps from the value the last one produced.
+  const step = useRef(onClick);
+  step.current = onClick;
+  const stop = () => window.clearTimeout(timer.current);
+
+  // A disabled button gets no pointerup, so hitting min or max has to end the hold here.
+  useEffect(() => {
+    if (disabled) stop();
+  }, [disabled]);
+  useEffect(() => stop, []);
+
+  function hold() {
+    step.current();
+    let delay = 400; // one deliberate step first, so a tap never overshoots
+    const loop = () => {
+      timer.current = window.setTimeout(() => {
+        step.current();
+        delay = Math.max(60, delay * 0.75);
+        loop();
+      }, delay);
+    };
+    loop();
+  }
+
   return (
     <button
       type="button"
       aria-label={label}
-      onClick={onClick}
+      onPointerDown={(e) => e.button === 0 && hold()}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      // Keyboard activation arrives as a click with no pointer (detail 0); pointer clicks
+      // were already stepped on pointerdown.
+      onClick={(e) => e.detail === 0 && onClick()}
+      onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
       className={cn(
-        "flex w-20 shrink-0 items-center justify-center rounded-control bg-raised text-ink",
+        "flex w-20 shrink-0 touch-none items-center justify-center rounded-control bg-raised text-ink",
         "transition-colors duration-150 ease-out-soft",
         "hover:bg-line active:bg-line disabled:opacity-25 disabled:pointer-events-none",
       )}
