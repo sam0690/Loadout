@@ -555,3 +555,20 @@ def test_two_first_link_requests_at_once_make_one_account(db: sa.Engine) -> None
 
     for outcome in _race(request, 5, _forget(db)):
         assert outcome == ["1", "1"], "both answered, and there is one account"
+
+
+def test_the_link_points_at_the_configured_web_app(
+    db: sa.Engine, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """It was hardcoded to localhost:3000, so every deployed link opened nothing."""
+    from api.core.config import get_settings
+    from api.services import auth as service
+
+    monkeypatch.setenv("WEB_URL", "https://app.example.test")
+    get_settings.cache_clear()
+    try:
+        with caplog.at_level("INFO", logger="loadout.auth"):
+            service.request_link(db, EMAIL, datetime.now(UTC))
+    finally:
+        get_settings.cache_clear()
+    assert "url=https://app.example.test/onboarding?token=" in caplog.text

@@ -13,6 +13,7 @@ from typing import Any
 
 import sqlalchemy as sa
 
+from api.core.config import get_settings
 from api.core.errors import Conflict, Unauthorized
 from api.core.security import (
     DECOY,
@@ -28,7 +29,6 @@ from api.schemas.auth import PROFILE_FIELDS, Me, Profile, Session
 
 log = logging.getLogger("loadout.auth")
 
-BASE_URL = "http://localhost:3000"
 # Unconsumed links outstanding before we stop issuing more. Counted in the database
 # rather than in memory, so it holds across worker processes without new infrastructure.
 # Consumed links do not count: logging in three times in a quarter hour is fine, being
@@ -77,7 +77,7 @@ def request_link(db: sa.Engine, email: str, now: datetime) -> None:
         token = issue_token(conn, user_id, now)
     # Onboarding is the page that reads ?token= and signs in; /auth/verify is the API
     # call it makes, not a page, and a link pointing there opened a 404.
-    send_link(email, f"{BASE_URL}/onboarding?token={token}")
+    send_link(email, f"{get_settings().web_url}/onboarding?token={token}")
 
 
 def verify(db: sa.Engine, token: str, now: datetime) -> Session:

@@ -18,6 +18,8 @@ class Settings:
     database_url: str
     redis_url: str
     cors_origins: list[str]
+    # Where magic links point. Defaults to the dev server the Makefile starts.
+    web_url: str
 
 
 @lru_cache
@@ -28,4 +30,7 @@ def get_settings() -> Settings:
         cors_origins=os.environ.get(
             "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
         ).split(","),
+        web_url=os.environ.get(
+            "WEB_URL", f"http://localhost:{os.environ.get('WEB_PORT', '3000')}"
+        ).rstrip("/"),
     )
