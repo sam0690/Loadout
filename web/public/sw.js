@@ -5,10 +5,10 @@
 // cold navigation fails at the transport before any of our code runs.
 //
 // Deliberately not Workbox: this caches a handful of routes and gets out of the way.
-const CACHE = "loadout-shell-v6";
+const CACHE = "loadout-shell-v7";
 // index.json is precached so steps work offline from install; photos are cached as
 // they are first shown, which Today's thumbnails do before a workout starts.
-const SHELL = ["/", "/today", "/week", "/progress", "/workout", "/summary", "/exercises/index.json", "/onboarding", "/settings"];
+const SHELL = ["/", "/today", "/week", "/profile", "/workout", "/summary", "/exercises/index.json", "/onboarding", "/profile/settings"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

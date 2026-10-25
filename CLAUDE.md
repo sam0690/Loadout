@@ -115,7 +115,8 @@ Built and verified:
   training context (constraint 5), the four generator inputs the client hardcoded, and
   `workout_completed` / `workout_abandoned`, which were defined and never emitted.
 - **Redesign** — bold athletic visual system (volt accent, Barlow Condensed display
-  face). Today / Week / Progress / Settings replace Plan and History; a full-screen
+  face). Today / Week / Profile replace Plan and History (Profile holds progress, and Settings
+  behind its gear); a full-screen
   `/workout` replaces the per-exercise logger; `/summary` closes a session. Old routes
   redirect. Client e1RM (Epley) is display only — PRs and trends, never prescriptions.
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, signOut, type ContextOut, type Profile, type ProfilePatch } from "@/lib/api/client";
 import { activeContextId, setActiveContextId } from "@/lib/context";
@@ -12,7 +13,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ProfileFields } from "@/components/intake/ProfileFields";
 import { TrainingFields } from "@/components/intake/TrainingFields";
-import { SettingsIcon } from "@/components/ui/icons";
+import { BackIcon, SettingsIcon } from "@/components/ui/icons";
+import { Field } from "@/components/ui/Field";
 import { BodyMetrics } from "@/components/BodyMetrics";
 import { bmiFromProfile } from "@/lib/bmi";
 import { cacheProfile } from "@/lib/profile";
@@ -130,6 +132,14 @@ export default function Settings() {
 
   return (
     <AppShell width="max-w-2xl">
+      <Link
+        href="/profile"
+        className="-ml-2 mt-4 inline-flex items-center gap-1.5 px-2 text-[0.9375rem] text-ink-muted hover:text-ink"
+        style={{ minHeight: "var(--tap)" }}
+      >
+        <BackIcon className="size-5" />
+        Profile
+      </Link>
       <PageHeader
         title="Settings"
         meta={me?.email}
@@ -245,6 +255,17 @@ export default function Settings() {
           <Skeleton className="h-40" />
         ) : (
           <>
+            <div className="mb-5">
+              <Field
+                label="Name"
+                hint="Shown on your profile. Leave empty to show your email."
+                autoComplete="name"
+                maxLength={40}
+                value={draft.display_name ?? ""}
+                // Empty clears it: the API takes null for "no name", never a blank one.
+                onChange={(e) => patch({ display_name: e.target.value.trim() ? e.target.value : null })}
+              />
+            </div>
             <ProfileFields value={draft} onChange={patch} />
             {measurements && (
               <BodyMetrics

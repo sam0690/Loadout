@@ -43,12 +43,11 @@ export function WeekIcon(p: Props) {
   );
 }
 
-/** A line that climbs. Progress is the e1RM going up. */
-export function ProgressIcon(p: Props) {
+export function ProfileIcon(p: Props) {
   return (
     <Glyph {...p}>
-      <path d="M3 15l4.5-4.5 3 3L17 7" />
-      <path d="M12.5 7H17v4.5" />
+      <circle cx="10" cy="7" r="3.25" />
+      <path d="M3.5 17a6.5 6.5 0 0 1 13 0" />
     </Glyph>
   );
 }

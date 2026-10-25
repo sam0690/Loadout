@@ -1,4 +1,4 @@
-import { api, type Profile } from "./api/client";
+import { api, type Me, type Profile } from "./api/client";
 
 /**
  * The profile, cached on the device.
@@ -33,5 +33,27 @@ export async function refreshProfile(): Promise<Profile | null> {
     return fresh;
   } catch {
     return cachedProfile();
+  }
+}
+
+const ME = "loadout.me";
+
+/** The account itself (email, joined), cached the same way for the Profile header. */
+export function cachedMe(): Me | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return JSON.parse(window.localStorage.getItem(ME) ?? "null") as Me | null;
+  } catch {
+    return null;
+  }
+}
+
+export async function refreshMe(): Promise<Me | null> {
+  try {
+    const fresh = await api.me();
+    window.localStorage.setItem(ME, JSON.stringify(fresh));
+    return fresh;
+  } catch {
+    return cachedMe();
   }
 }

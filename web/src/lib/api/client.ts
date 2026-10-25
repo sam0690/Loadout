@@ -21,6 +21,7 @@ export type Experience = components["schemas"]["Experience"];
 export type Profile = components["schemas"]["Profile-Output"];
 /** What we send: a written key means "set this", an absent key means "leave it". */
 export type ProfilePatch = components["schemas"]["Profile-Input"];
+export type Me = components["schemas"]["Me"];
 
 export type PlanPayload = {
   /**
@@ -95,7 +96,7 @@ export function setToken(value: string): void {
  * behind is the next account seeing the last one's plan.
  */
 export function signOut(): void {
-  for (const key of ["loadout.token", "loadout.plan", "loadout.profile", "loadout.context"]) {
+  for (const key of ["loadout.token", "loadout.plan", "loadout.profile", "loadout.me", "loadout.context"]) {
     window.localStorage.removeItem(key);
   }
 }
@@ -136,7 +137,7 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
-  me: () => request<{ id: string; email: string }>("/auth/me"),
+  me: () => request<Me>("/auth/me"),
 
   profile: () => request<Profile>("/auth/profile"),
 

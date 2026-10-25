@@ -42,7 +42,7 @@ export function BodyMetrics({
         BMI is weight over height squared and says nothing about what that weight is
         made of. It reads high for trained lifters. Treat it as a reference figure, not
         a target —{" "}
-        <Link href="/settings" className="underline underline-offset-2 hover:text-ink-muted">
+        <Link href="/profile/settings" className="underline underline-offset-2 hover:text-ink-muted">
           update your measurements
         </Link>
         .

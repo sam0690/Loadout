@@ -168,6 +168,19 @@ export default function Onboarding() {
               void submit();
             }}
           >
+            {mode === "signup" && (
+              // Rides on the first intake save rather than on signup: it is profile, not
+              // credentials, and the account must exist before the profile can be written.
+              <Field
+                label="Name (optional)"
+                autoComplete="name"
+                maxLength={40}
+                value={draft.display_name ?? ""}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, display_name: e.target.value.trim() ? e.target.value : null }))
+                }
+              />
+            )}
             <Field
               label="Email"
               type="email"

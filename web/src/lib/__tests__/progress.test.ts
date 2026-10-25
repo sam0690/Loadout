@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LoggedSet } from "../queue";
-import { trends } from "../progress";
+import { records, trends } from "../progress";
 import { e1rm } from "../summary";
 
 let n = 0;
@@ -52,5 +52,20 @@ describe("trends", () => {
   it("puts the most recently trained exercise first", () => {
     const out = trends([set("a", "2026-10-20", 10, "30"), set("b", "2026-10-24", 10, null)]);
     expect(out.map((t) => t.exerciseId)).toEqual(["b", "a"]);
+  });
+});
+
+describe("records", () => {
+  it("counts days that beat every earlier day, never the first, never bodyweight", () => {
+    const t = trends([
+      set("a", "2026-10-01", 5, "100"),
+      set("a", "2026-10-03", 5, "105"), // record
+      set("a", "2026-10-05", 5, "102.5"),
+      set("a", "2026-10-07", 5, "110"), // record
+      set("b", "2026-10-01", 5, "50"),
+      set("c", "2026-10-01", 10, null),
+      set("c", "2026-10-03", 15, null),
+    ]);
+    expect(records(t)).toBe(2);
   });
 });

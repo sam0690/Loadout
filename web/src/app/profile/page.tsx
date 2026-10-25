@@ -6,22 +6,23 @@ import { loggedSets, type LoggedSet } from "@/lib/queue";
 import { cachedPlan } from "@/lib/plan";
 import { analyse } from "@/lib/analysis";
 import { bmiFromProfile } from "@/lib/bmi";
-import { cachedProfile, refreshProfile } from "@/lib/profile";
-import type { Profile } from "@/lib/api/client";
-import { trends } from "@/lib/progress";
+import { cachedMe, cachedProfile, refreshMe, refreshProfile } from "@/lib/profile";
+import type { Me, Profile } from "@/lib/api/client";
+import { records, trends } from "@/lib/progress";
 import { Analysis } from "@/components/Analysis";
 import { Strength } from "@/components/Strength";
 import { BodyMetrics } from "@/components/BodyMetrics";
 import { fromDay, localDay } from "@/lib/day";
 import { displayLoad, readUnits, type Units } from "@/lib/units";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
+import { ProfileHeader } from "@/components/ProfileHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { RowSkeleton } from "@/components/ui/Skeleton";
 import { HistoryIcon } from "@/components/ui/icons";
 
 /**
- * The numbers: this week against the plan, the trend, the body, then every set.
+ * You, then the numbers: this week against the plan, the trend, the body, every set.
  *
  * Everything logged on this device, newest first.
  *
@@ -42,15 +43,21 @@ interface Day {
 /** Sessions shown before "Show older": the strength cards already carry the long view. */
 const RECENT = 7;
 
-export default function Progress() {
+export default function ProfilePage() {
   const [sets, setSets] = useState<LoggedSet[] | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(cachedProfile);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [me, setMe] = useState<Me | null>(null);
   const [older, setOlder] = useState(false);
   const units = readUnits();
 
   useEffect(() => {
     void loggedSets().then(setSets);
+    // Cache first, in the effect rather than the initial state: the prerendered HTML has
+    // no localStorage, and a first render that differs from it is a hydration error.
+    setProfile(cachedProfile());
+    setMe(cachedMe());
     void refreshProfile().then(setProfile);
+    void refreshMe().then(setMe);
   }, []);
 
   const days = useMemo(() => (sets === null ? null : group(sets)), [sets]);
@@ -63,23 +70,22 @@ export default function Progress() {
   const strength = useMemo(() => (sets === null ? [] : trends(sets)), [sets]);
   const measurements = profile ? bmiFromProfile(profile) : null;
 
-  const totals = useMemo(() => {
-    if (!days) return null;
-    return {
-      sessions: days.length,
-      sets: days.reduce((n, d) => n + d.sets.length, 0),
-    };
-  }, [days]);
+  const stats = useMemo(() => {
+    if (!days || sets === null) return null;
+    return [
+      { label: "Sessions", value: days.length },
+      { label: "Sets", value: sets.length },
+      { label: "PRs", value: records(strength) },
+    ];
+  }, [days, sets, strength]);
 
   return (
     <AppShell width="max-w-2xl">
-      <PageHeader
-        title="Progress"
-        meta={
-          totals && totals.sets > 0
-            ? `${totals.sets} set${totals.sets === 1 ? "" : "s"} across ${totals.sessions} session${totals.sessions === 1 ? "" : "s"}`
-            : undefined
-        }
+      <ProfileHeader
+        name={profile?.display_name}
+        email={me?.email}
+        since={me?.created_at}
+        stats={stats}
       />
 
       <Strength trends={strength} units={units} className="mb-10" />

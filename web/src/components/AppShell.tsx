@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { cn } from "./ui/cn";
 import { SyncBadge } from "./Sync";
-import { PlanIcon, ProgressIcon, SettingsIcon, WeekIcon } from "./ui/icons";
+import { PlanIcon, ProfileIcon, WeekIcon } from "./ui/icons";
 
 /**
  * The application frame. One nav, two layouts.
@@ -21,8 +21,8 @@ import { PlanIcon, ProgressIcon, SettingsIcon, WeekIcon } from "./ui/icons";
 const TABS = [
   { href: "/today", label: "Today", Icon: PlanIcon },
   { href: "/week", label: "Week", Icon: WeekIcon },
-  { href: "/progress", label: "Progress", Icon: ProgressIcon },
-  { href: "/settings", label: "Settings", Icon: SettingsIcon },
+  // Progress and Settings live under Profile: one tab for "me", not two.
+  { href: "/profile", label: "Profile", Icon: ProfileIcon },
 ] as const;
 
 export function AppShell({

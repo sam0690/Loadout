@@ -58,7 +58,7 @@ export function Coverage({
         {hints.length > 0 && `Add ${list(hints, "or")} to close the gap. `}
         Update{" "}
         <Link
-          href="/settings"
+          href="/profile/settings"
           className="underline underline-offset-2 hover:text-ink-muted"
         >
           your training places

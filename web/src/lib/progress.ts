@@ -54,3 +54,21 @@ export function trends(sets: readonly LoggedSet[]): Trend[] {
 
   return out.sort((a, b) => b.points.at(-1)!.day.localeCompare(a.points.at(-1)!.day));
 }
+
+/**
+ * Records set across the whole log: each loaded day that beat every earlier day of the
+ * same exercise. The first day only sets a baseline, as in `summarise`, so the count
+ * agrees with the PR cards a user saw at the end of each session.
+ */
+export function records(all: readonly Trend[]): number {
+  let n = 0;
+  for (const t of all) {
+    if (t.kind !== "e1rm") continue;
+    let best = t.points[0]!.value;
+    for (const p of t.points.slice(1)) {
+      if (p.value > best) n++;
+      best = Math.max(best, p.value);
+    }
+  }
+  return n;
+}
