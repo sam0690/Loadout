@@ -6,11 +6,11 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.contexts import router as contexts_router
 from api.core import errors
 from api.events import router as events_router
 from api.plans import router as plans_router
 from api.routers.auth import router as auth_router
+from api.routers.contexts import router as contexts_router
 
 # Without this the magic link is dropped on the floor. It is emitted at INFO on the
 # "loadout" logger, and Python's default root level is WARNING, so the one delivery
