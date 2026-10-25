@@ -122,7 +122,7 @@ Built and verified:
   `/workout` replaces the per-exercise logger; `/summary` closes a session. Old routes
   redirect. Client e1RM (Epley) is display only — PRs and trends, never prescriptions.
 
-D1–D32 in `docs/decisions.md` are settled.
+D1–D33 in `docs/decisions.md` are settled.
 
 Every stated acceptance criterion is verified, 2.3's offline session included — both
 Playwright specs drive a real browser against a running stack.

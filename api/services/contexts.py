@@ -130,12 +130,13 @@ def replace(
     db: sa.Engine, user_id: uuid.UUID, context_id: uuid.UUID, body: ContextIn
 ) -> ContextOut:
     with db.begin() as conn:
-        _owned(conn, context_id, user_id)
+        row = _owned(conn, context_id, user_id)
         if body.is_default:
             repo.clear_other_defaults(conn, user_id, keep=context_id)
-        repo.update_context(
-            conn, context_id, {**_columns(conn, body), "is_default": body.is_default}
-        )
+        # The default moves only by promoting another context, never by demoting this
+        # one in place: that left contexts with no default and no session to start (D33).
+        is_default = body.is_default or row.is_default
+        repo.update_context(conn, context_id, {**_columns(conn, body), "is_default": is_default})
         _write_loads(conn, context_id, body.loads)
         return _render(conn, _owned(conn, context_id, user_id))
 

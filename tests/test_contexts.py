@@ -269,3 +269,22 @@ def test_a_context_built_from_an_archetype_resolves_its_preset(client: TestClien
     assert "dumbbells" in slugs, "from the preset"
     assert "kettlebell" in slugs, "added"
     assert "cable_stack" not in slugs, "removed wins over the preset"
+
+
+def test_replacing_the_default_with_is_default_false_keeps_it_the_default(
+    client: TestClient, db: sa.Engine
+) -> None:
+    """The default moves only by promoting another context (D33). Demoting it in place
+    left the user holding contexts and no default, with no session to start."""
+    home = client.post("/contexts", json=body(label="home")).json()
+    client.post("/contexts", json=body(label="gym"))
+    got = client.put(f"/contexts/{home['id']}", json=body(label="home", is_default=False))
+    assert got.status_code == 200
+    assert got.json()["is_default"] is True
+    with db.connect() as c:
+        defaults = c.execute(
+            sa.select(sa.func.count())
+            .select_from(training_contexts)
+            .where(training_contexts.c.user_id == ME, training_contexts.c.is_default.is_(True))
+        ).scalar_one()
+    assert defaults == 1

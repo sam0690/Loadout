@@ -738,3 +738,13 @@ movement. Its written steps describe a different exercise (a walking lunge is no
 stationary one), so a borrowed entry has frames and no steps. Entries without a faithful
 match (pike push-up, YTW, the self-resisted curl and raise) have no photo rather than a
 misleading one.
+
+
+## D33 — The default context moves only by promoting another — APPLIED
+
+`PUT /contexts/{id}` with `is_default: false` on the current default used to demote it in
+place, leaving a user with contexts and no default, the state `create` and `delete`
+already refuse to produce. Now the flag is ignored in that one case: the context stays the
+default, and the response says so. The default changes only when another context is made
+the default, whether by `create` or by `PUT` with `is_default: true`. No 422, so a client
+that round-trips GET → PUT with an edited label keeps working.
