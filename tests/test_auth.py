@@ -16,9 +16,9 @@ import pytest
 import sqlalchemy as sa
 from fastapi.testclient import TestClient
 
-from api.auth import ALGORITHM, hash_token
-from api.auth import engine as auth_engine
-from api.events import engine as events_engine
+from api.core.security import ALGORITHM, hash_token
+from api.deps import get_engine as auth_engine
+from api.deps import get_engine as events_engine
 from api.main import app
 from db import DATABASE_URL, jwt_secret
 from schema import events, exercise_state, exercises, magic_links, users

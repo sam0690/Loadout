@@ -19,20 +19,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.dialects.postgresql import insert
 
-from api.auth import CurrentUser
-from db import DATABASE_URL
+from api.deps import CurrentUser, get_engine
 from ingest.equipment import UnknownEquipment, resolve_slug
 from schema import equipment, gym_archetypes, training_context_loads, training_contexts
 
 router = APIRouter(prefix="/contexts", tags=["contexts"])
-_engine = sa.create_engine(DATABASE_URL)
 CONTEXT_LOADS = (
     Path(__file__).resolve().parent.parent / "queries" / "context_loads.sql"
 ).read_text()
-
-
-def engine() -> sa.Engine:
-    return _engine
 
 
 class ArchetypeOut(BaseModel):
@@ -184,7 +178,7 @@ def _clear_other_defaults(
 
 
 @router.get("/archetypes")
-def list_archetypes(db: Annotated[sa.Engine, Depends(engine)]) -> list[ArchetypeOut]:
+def list_archetypes(db: Annotated[sa.Engine, Depends(get_engine)]) -> list[ArchetypeOut]:
     """The presets onboarding offers.
 
     Unauthenticated on purpose: this is catalog data, and asking someone to sign in
@@ -212,7 +206,7 @@ def list_archetypes(db: Annotated[sa.Engine, Depends(engine)]) -> list[Archetype
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create(
-    body: ContextIn, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+    body: ContextIn, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(get_engine)]
 ) -> ContextOut:
     context_id = uuid.uuid4()
     with db.begin() as conn:
@@ -241,7 +235,7 @@ def create(
 
 @router.get("")
 def list_contexts(
-    user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+    user_id: CurrentUser, db: Annotated[sa.Engine, Depends(get_engine)]
 ) -> list[ContextOut]:
     with db.connect() as conn:
         rows = conn.execute(
@@ -254,7 +248,7 @@ def list_contexts(
 
 @router.get("/{context_id}")
 def get_context(
-    context_id: uuid.UUID, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+    context_id: uuid.UUID, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(get_engine)]
 ) -> ContextOut:
     with db.connect() as conn:
         return _render(conn, _owned(conn, context_id, user_id))
@@ -263,7 +257,7 @@ def get_context(
 @router.put("/{context_id}")
 def replace(
     context_id: uuid.UUID, body: ContextIn, user_id: CurrentUser,
-    db: Annotated[sa.Engine, Depends(engine)],
+    db: Annotated[sa.Engine, Depends(get_engine)],
 ) -> ContextOut:
     with db.begin() as conn:
         _owned(conn, context_id, user_id)
@@ -286,7 +280,7 @@ def replace(
 
 @router.delete("/{context_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(
-    context_id: uuid.UUID, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+    context_id: uuid.UUID, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(get_engine)]
 ) -> None:
     with db.begin() as conn:
         row = _owned(conn, context_id, user_id)

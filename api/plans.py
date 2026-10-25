@@ -11,30 +11,18 @@ from typing import Annotated, Any, Literal
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
-from redis import Redis
 from rq import Queue
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
-from api.auth import CurrentUser
-from db import DATABASE_URL, redis_url
+from api.deps import CurrentUser, get_engine, get_queue
 from engine.generator import Experience, Goal
 from schema import plans, training_contexts
 from worker.plan_job import generate
 
 router = APIRouter(tags=["plans"])
-_engine = sa.create_engine(DATABASE_URL)
-_queue = Queue("plans", connection=Redis.from_url(redis_url()))
 
 MAX_SESSIONS_PER_WEEK = 7
-
-
-def engine() -> sa.Engine:
-    return _engine
-
-
-def queue() -> Queue:
-    return _queue
 
 
 class PlanRequest(BaseModel):
@@ -80,8 +68,8 @@ class PlanOut(BaseModel):
 def request_plan(
     body: PlanRequest,
     user_id: CurrentUser,
-    db: Annotated[sa.Engine, Depends(engine)],
-    q: Annotated[Queue, Depends(queue)],
+    db: Annotated[sa.Engine, Depends(get_engine)],
+    q: Annotated[Queue, Depends(get_queue)],
 ) -> Enqueued:
     with db.connect() as conn:
         owned = conn.execute(
@@ -107,7 +95,7 @@ def request_plan(
 
 @router.get("/jobs/{job_id}")
 def job_status(
-    job_id: str, user_id: CurrentUser, q: Annotated[Queue, Depends(queue)]
+    job_id: str, user_id: CurrentUser, q: Annotated[Queue, Depends(get_queue)]
 ) -> JobStatus:
     try:
         job = Job.fetch(job_id, connection=q.connection)
@@ -126,7 +114,7 @@ def job_status(
 
 @router.get("/plans/current")
 def current_plan(
-    user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+    user_id: CurrentUser, db: Annotated[sa.Engine, Depends(get_engine)]
 ) -> PlanOut:
     with db.connect() as conn:
         row = conn.execute(

@@ -17,13 +17,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from sqlalchemy.dialects.postgresql import insert
 
-from api.auth import CurrentUser
-from db import DATABASE_URL
+from api.deps import CurrentUser, get_engine
 from projections.exercise_state import rebuild
 from schema import EVENT_TYPES, events
 
 router = APIRouter()
-_engine = sa.create_engine(DATABASE_URL)
 
 MAX_BATCH = 500
 
@@ -107,17 +105,13 @@ class Accepted(BaseModel):
     rejected: list[Rejected] = []
 
 
-def engine() -> sa.Engine:
-    return _engine
-
-
 @router.post("/events", response_model=Accepted)
 def post_events(
     batch: Batch,
     # From the bearer token and nowhere else. This was a query parameter until 2.2a,
     # which meant anyone could write events attributed to anyone.
     user_id: CurrentUser,
-    db: Annotated[sa.Engine, Depends(engine)],
+    db: Annotated[sa.Engine, Depends(get_engine)],
 ) -> Accepted:
     if len({e.id for e in batch.events}) != len(batch.events):
         raise HTTPException(422, "duplicate event ids within one batch")
@@ -167,7 +161,7 @@ class StoredEvent(Event):
 # well under a megabyte; page it (after a client_ts cursor) when a log outgrows that.
 @router.get("/events")
 def list_events(
-    user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+    user_id: CurrentUser, db: Annotated[sa.Engine, Depends(get_engine)]
 ) -> list[StoredEvent]:
     """The caller's own log, oldest first, so a new device can rebuild its history.
 

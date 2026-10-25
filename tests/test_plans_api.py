@@ -19,12 +19,12 @@ from fastapi.testclient import TestClient
 from rq import Queue
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from api.auth import ALGORITHM
-from api.auth import engine as auth_engine
-from api.contexts import engine as contexts_engine
+from api.core.security import ALGORITHM
+from api.deps import get_engine as auth_engine
+from api.deps import get_engine as contexts_engine
+from api.deps import get_engine as plans_engine
+from api.deps import get_queue as queue_dep
 from api.main import app
-from api.plans import engine as plans_engine
-from api.plans import queue as queue_dep
 from db import DATABASE_URL, jwt_secret
 from engine import ENGINE_VERSION
 from schema import plans, training_contexts, users

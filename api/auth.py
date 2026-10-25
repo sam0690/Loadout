@@ -6,34 +6,32 @@ single-use is the property that matters and a self-contained token cannot expres
 of no revocation.
 """
 
-import hashlib
-import hmac
 import logging
 import secrets
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated
 
-import jwt
 import sqlalchemy as sa
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field, StringConstraints
 
-from db import DATABASE_URL, jwt_secret
+from api.core.security import (
+    DECOY,
+    LINK_TTL,
+    encode_session,
+    hash_password,
+    hash_token,
+    password_matches,
+)
+from api.deps import CurrentUser, Db
 from engine.generator import Experience, Goal
 from schema import magic_links, users
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 log = logging.getLogger("loadout.auth")
-_engine = sa.create_engine(DATABASE_URL)
-_bearer = HTTPBearer(auto_error=False)
 
-ALGORITHM = "HS256"
-LINK_TTL = timedelta(minutes=15)
-# No revocation exists (D23), so the window a leaked token stays usable is exactly this.
-SESSION_TTL = timedelta(days=7)
 BASE_URL = "http://localhost:3000"
 # Unconsumed links outstanding before we stop issuing more. Counted in the database
 # rather than in memory, so it holds across worker processes without new infrastructure.
@@ -93,15 +91,6 @@ class Profile(BaseModel):
     session_minutes: int | None = Field(default=None, ge=10, le=300)
 
 
-def engine() -> sa.Engine:
-    return _engine
-
-
-def hash_token(token: str) -> str:
-    """Only the hash is stored, so a leaked database hands out no logins."""
-    return hashlib.sha256(token.encode()).hexdigest()
-
-
 def send_link(email: str, url: str) -> None:
     """Deliver the magic link.
 
@@ -112,33 +101,9 @@ def send_link(email: str, url: str) -> None:
     log.info("magic_link email=%s url=%s", email, url)
 
 
-# scrypt from the standard library rather than a bcrypt/argon2 dependency: memory-hard,
-# salted, and already installed. n=2**14 is the stdlib's documented interactive setting.
-SCRYPT = {"n": 2**14, "r": 8, "p": 1, "dklen": 32}
-
-
-def hash_password(password: str) -> str:
-    salt = secrets.token_bytes(16)
-    digest = hashlib.scrypt(password.encode(), salt=salt, **SCRYPT)
-    return f"scrypt${salt.hex()}${digest.hex()}"
-
-
-def password_matches(password: str, stored: str) -> bool:
-    _, salt, digest = stored.split("$")
-    got = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), **SCRYPT)
-    return hmac.compare_digest(got.hex(), digest)
-
-
-# Checked against when the address is unknown, so a miss costs the same scrypt as a
-# wrong password and response time does not say which one it was.
-_DECOY = hash_password(secrets.token_hex(16))
-
-
 def issue_session(user_id: uuid.UUID) -> Session:
-    now = datetime.now(UTC)
-    expires = now + SESSION_TTL
-    claims = {"sub": str(user_id), "iat": int(now.timestamp()), "exp": int(expires.timestamp())}
-    return Session(access_token=jwt.encode(claims, jwt_secret(), ALGORITHM), expires_at=expires)
+    token, expires = encode_session(user_id, datetime.now(UTC))
+    return Session(access_token=token, expires_at=expires)
 
 
 def issue_token(conn: sa.Connection, user_id: uuid.UUID) -> str:
@@ -154,7 +119,7 @@ def issue_token(conn: sa.Connection, user_id: uuid.UUID) -> str:
 
 
 @router.post("/request", status_code=status.HTTP_202_ACCEPTED)
-def request_link(body: RequestLink, db: Annotated[sa.Engine, Depends(engine)]) -> dict[str, str]:
+def request_link(body: RequestLink, db: Db) -> dict[str, str]:
     """Send a login link. Creates the account on first use.
 
     The response is identical whether or not the address is known. A different status or
@@ -192,7 +157,7 @@ def request_link(body: RequestLink, db: Annotated[sa.Engine, Depends(engine)]) -
 
 
 @router.post("/verify")
-def verify(body: Verify, db: Annotated[sa.Engine, Depends(engine)]) -> Session:
+def verify(body: Verify, db: Db) -> Session:
     now = datetime.now(UTC)
     with db.begin() as conn:
         row = conn.execute(
@@ -211,7 +176,7 @@ def verify(body: Verify, db: Annotated[sa.Engine, Depends(engine)]) -> Session:
 
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
-def signup(body: Credentials, db: Annotated[sa.Engine, Depends(engine)]) -> Session:
+def signup(body: Credentials, db: Db) -> Session:
     """Create an account with a password (D31).
 
     An address that already has an account is refused, password or not: setting a
@@ -236,7 +201,7 @@ def signup(body: Credentials, db: Annotated[sa.Engine, Depends(engine)]) -> Sess
 
 
 @router.post("/login")
-def login(body: Credentials, db: Annotated[sa.Engine, Depends(engine)]) -> Session:
+def login(body: Credentials, db: Db) -> Session:
     """Unknown address, magic-link-only account and wrong password all answer the same."""
     with db.connect() as conn:
         row = conn.execute(
@@ -244,41 +209,14 @@ def login(body: Credentials, db: Annotated[sa.Engine, Depends(engine)]) -> Sessi
                 sa.func.lower(users.c.email) == body.email.strip().lower()
             )
         ).one_or_none()
-    stored = row.password_hash if row is not None and row.password_hash else _DECOY
+    stored = row.password_hash if row is not None and row.password_hash else DECOY
     if not password_matches(body.password, stored) or row is None or not row.password_hash:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong email or password")
     return issue_session(row.id)
 
 
-def current_user(
-    creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-) -> uuid.UUID:
-    """The caller's id, from the bearer token and nowhere else.
-
-    Before this existed, POST /events took user_id as a query parameter, so anyone could
-    write events as anyone. The whole fix is that this is the only source of a user id.
-    """
-    if creds is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing bearer token")
-    try:
-        claims = jwt.decode(
-            creds.credentials,
-            jwt_secret(),
-            algorithms=[ALGORITHM],
-            # A token without an expiry never expires, so its absence is a rejection
-            # rather than a default.
-            options={"require": ["sub", "exp", "iat"]},
-        )
-        return uuid.UUID(claims["sub"])
-    except (jwt.InvalidTokenError, ValueError) as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid token") from exc
-
-
-CurrentUser = Annotated[uuid.UUID, Depends(current_user)]
-
-
 @router.get("/me")
-def me(user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]) -> Me:
+def me(user_id: CurrentUser, db: Db) -> Me:
     with db.connect() as conn:
         row = conn.execute(sa.select(users).where(users.c.id == user_id)).one_or_none()
     if row is None:
@@ -294,7 +232,7 @@ def _profile(row: sa.Row[tuple[object, ...]]) -> Profile:
 
 
 @router.get("/profile")
-def read_profile(user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]) -> Profile:
+def read_profile(user_id: CurrentUser, db: Db) -> Profile:
     with db.connect() as conn:
         row = conn.execute(sa.select(users).where(users.c.id == user_id)).one_or_none()
     if row is None:
@@ -304,7 +242,7 @@ def read_profile(user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
 
 @router.put("/profile")
 def write_profile(
-    body: Profile, user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]
+    body: Profile, user_id: CurrentUser, db: Db
 ) -> Profile:
     """Merge, not replace.
 

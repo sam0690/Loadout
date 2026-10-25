@@ -16,9 +16,9 @@ import sqlalchemy as sa
 from fastapi.testclient import TestClient
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from api.auth import ALGORITHM
-from api.auth import engine as auth_engine
-from api.events import engine as engine_dep
+from api.core.security import ALGORITHM
+from api.deps import get_engine as auth_engine
+from api.deps import get_engine as engine_dep
 from api.main import app
 from db import DATABASE_URL, jwt_secret
 from projections.exercise_state import rebuild
