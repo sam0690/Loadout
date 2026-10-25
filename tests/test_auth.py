@@ -572,3 +572,22 @@ def test_the_link_points_at_the_configured_web_app(
     finally:
         get_settings.cache_clear()
     assert "url=https://app.example.test/onboarding?token=" in caplog.text
+
+
+def test_a_corrupt_stored_hash_is_a_wrong_password_not_a_500(
+    client: TestClient, db: sa.Engine
+) -> None:
+    from api.core.security import password_matches
+
+    assert password_matches(PASSWORD, "garbage") is False
+    assert password_matches(PASSWORD, "scrypt$zz$zz") is False
+
+    client.post("/auth/signup", json={"email": EMAIL, "password": PASSWORD})
+    with db.begin() as c:
+        c.execute(
+            sa.update(users)
+            .where(sa.func.lower(users.c.email) == EMAIL)
+            .values(password_hash="not-a-hash")
+        )
+    got = client.post("/auth/login", json={"email": EMAIL, "password": PASSWORD})
+    assert (got.status_code, got.json()) == (401, {"detail": "wrong email or password"})

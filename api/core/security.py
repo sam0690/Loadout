@@ -42,8 +42,13 @@ def hash_password(password: str) -> str:
 
 
 def password_matches(password: str, stored: str) -> bool:
-    _, salt, digest = stored.split("$")
-    got = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), **SCRYPT)
+    try:
+        _, salt, digest = stored.split("$")
+        got = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), **SCRYPT)
+    except ValueError:
+        # A stored value that is not ours (corrupt, or some future format) matches
+        # nothing, so login answers 401 rather than 500. The link still signs them in.
+        return False
     return hmac.compare_digest(got.hex(), digest)
 
 
