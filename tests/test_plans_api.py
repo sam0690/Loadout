@@ -302,3 +302,13 @@ def test_a_shipped_substitute_carries_enough_to_render_offline(client: TestClien
         assert substitute["slug"], "a name, not just an id"
         assert "equipment" in substitute, "so the user can see what it needs"
         assert isinstance(substitute["equipment"], list)
+
+
+def test_a_job_that_finished_without_a_plan_reports_failed(
+    client: TestClient, q: Queue
+) -> None:
+    """A finished job with no plan id (expired result, or nothing returned) used to 500."""
+    job = q.enqueue(print, meta={"user_id": str(ME)})
+    got = client.get(f"/jobs/{job.id}")
+    assert got.status_code == 200, got.text
+    assert got.json()["status"] == "failed"

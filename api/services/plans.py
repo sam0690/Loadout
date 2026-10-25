@@ -44,10 +44,13 @@ def job_status(q: Queue, user_id: uuid.UUID, job_id: str) -> JobStatus:
     if job.meta.get("user_id") != str(user_id):
         raise NotFound("no such job")
 
-    if job.is_failed:
+    plan_id = job.return_value() if job.is_finished else None
+    if plan_id is not None:
+        return JobStatus(job_id=job_id, status="finished", plan_id=uuid.UUID(plan_id))
+    # Finished with no plan id (its result expired, or it returned nothing) is as useless
+    # to the client as a failure, and was a 500.
+    if job.is_failed or job.is_finished:
         return JobStatus(job_id=job_id, status="failed", error="plan generation failed")
-    if job.is_finished:
-        return JobStatus(job_id=job_id, status="finished", plan_id=uuid.UUID(job.return_value()))
     return JobStatus(job_id=job_id, status="started" if job.is_started else "queued")
 
 
