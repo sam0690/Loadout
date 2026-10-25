@@ -27,9 +27,13 @@ def get_settings() -> Settings:
     return Settings(
         database_url=DATABASE_URL,
         redis_url=redis_url(),
-        cors_origins=os.environ.get(
-            "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
-        ).split(","),
+        cors_origins=[
+            origin.strip()
+            for origin in os.environ.get(
+                "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+            ).split(",")
+            if origin.strip()
+        ],
         web_url=os.environ.get(
             "WEB_URL", f"http://localhost:{os.environ.get('WEB_PORT', '3000')}"
         ).rstrip("/"),
