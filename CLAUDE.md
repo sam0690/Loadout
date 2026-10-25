@@ -12,6 +12,8 @@ Full spec: `docs/PRD.md`. Read the relevant section before implementing anything
 
 Resolutions: `docs/decisions.md`. The PRD had gaps and self-contradictions; each is resolved there with an ID (D1–D16) and the PRD points at them inline. **Where the two conflict, decisions.md wins.**
 
+Backend layers and import rules: `docs/backend-structure.md`.
+
 **The two mechanisms that carry the product:**
 1. A substitution graph — exercises as nodes sharing a movement pattern, edges for equipment downgrade, difficulty step, and lateral equivalence.
 2. A progression engine — deterministic arithmetic over logged performance (Epley e1RM, double progression, volume landmarks).
