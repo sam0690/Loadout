@@ -64,15 +64,21 @@ def insert_link(
     )
 
 
-def get_link(conn: sa.Connection, token_hash: str) -> sa.Row[Any] | None:
-    return conn.execute(
-        sa.select(magic_links).where(magic_links.c.token_hash == token_hash)
-    ).one_or_none()
+def consume_link(conn: sa.Connection, token_hash: str, now: datetime) -> uuid.UUID | None:
+    """Spend a live link and return its user, or None if there was nothing to spend.
 
-
-def consume_link(conn: sa.Connection, token_hash: str, now: datetime) -> None:
-    conn.execute(
+    One statement rather than read-then-write: the row lock makes a concurrent second
+    attempt wait for the first, then find consumed_at set and match nothing. Reading
+    first let two simultaneous verifies both see an unspent link.
+    """
+    found: uuid.UUID | None = conn.execute(
         sa.update(magic_links)
-        .where(magic_links.c.token_hash == token_hash)
+        .where(
+            magic_links.c.token_hash == token_hash,
+            magic_links.c.consumed_at.is_(None),
+            magic_links.c.expires_at > now,
+        )
         .values(consumed_at=now)
-    )
+        .returning(magic_links.c.user_id)
+    ).scalar_one_or_none()
+    return found

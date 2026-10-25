@@ -79,13 +79,12 @@ def request_link(db: sa.Engine, email: str, now: datetime) -> None:
 
 def verify(db: sa.Engine, token: str, now: datetime) -> Session:
     with db.begin() as conn:
-        row = repo.get_link(conn, hash_token(token))
-        # Unknown, expired and already-used all answer the same way: a caller probing
-        # tokens learns only that this one did not work.
-        if row is None or row.consumed_at is not None or row.expires_at <= now:
-            raise Unauthorized("invalid or expired link")
-        repo.consume_link(conn, row.token_hash, now)
-    return issue_session(row.user_id, now)
+        user_id = repo.consume_link(conn, hash_token(token), now)
+    # Unknown, expired and already-used all answer the same way: a caller probing
+    # tokens learns only that this one did not work.
+    if user_id is None:
+        raise Unauthorized("invalid or expired link")
+    return issue_session(user_id, now)
 
 
 def signup(db: sa.Engine, email: str, password: str, now: datetime) -> Session:

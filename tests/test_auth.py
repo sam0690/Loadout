@@ -6,8 +6,10 @@ matters most.
 """
 
 import re
+import threading
 import uuid
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -16,6 +18,7 @@ import pytest
 import sqlalchemy as sa
 from fastapi.testclient import TestClient
 
+from api.core.errors import Unauthorized
 from api.core.security import ALGORITHM, hash_token
 from api.deps import get_engine as auth_engine
 from api.deps import get_engine as events_engine
@@ -129,6 +132,34 @@ def test_a_link_works_only_once(
     assert client.post("/auth/verify", json={"token": token}).status_code == 200
     second = client.post("/auth/verify", json={"token": token})
     assert second.status_code == 401, "a link forwarded or logged elsewhere is spent"
+
+
+def test_a_link_works_only_once_even_when_spent_twice_at_once(db: sa.Engine) -> None:
+    """Read-then-write let two simultaneous verifies both see an unspent link.
+
+    Several links, because a race that loses once can pass by luck.
+    """
+    from api.services import auth as service
+
+    now = datetime.now(UTC)
+    with db.begin() as c:
+        user_id = uuid.uuid4()
+        c.execute(sa.insert(users).values(id=user_id, email=EMAIL))
+        tokens = [service.issue_token(c, user_id, now) for _ in range(10)]
+
+    def attempt(token: str, gate: threading.Barrier) -> bool:
+        gate.wait()
+        try:
+            service.verify(db, token, now)
+        except Unauthorized:
+            return False
+        return True
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        for token in tokens:
+            gate = threading.Barrier(2)
+            wins = list(pool.map(attempt, [token, token], [gate, gate]))
+            assert sorted(wins) == [False, True], "exactly one of two racing verifies wins"
 
 
 def test_an_expired_link_is_refused(
