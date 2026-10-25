@@ -8,7 +8,7 @@ matters most.
 import re
 import threading
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -18,7 +18,7 @@ import pytest
 import sqlalchemy as sa
 from fastapi.testclient import TestClient
 
-from api.core.errors import Unauthorized
+from api.core.errors import Conflict, Unauthorized
 from api.core.security import ALGORITHM, hash_token
 from api.deps import get_engine as auth_engine
 from api.deps import get_engine as events_engine
@@ -498,3 +498,60 @@ def test_every_failed_login_looks_the_same(
 def test_a_short_password_is_refused_at_the_boundary(client: TestClient) -> None:
     short = client.post("/auth/signup", json={"email": EMAIL, "password": "short"})
     assert short.status_code == 422
+
+
+def _race(fn: Callable[[], str], times: int, reset: Callable[[], None]) -> list[list[str]]:
+    """Run fn twice at once, `times` times over. A race that loses once can pass by luck."""
+
+    def go(gate: threading.Barrier) -> str:
+        gate.wait()
+        return fn()
+
+    rounds = []
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        for _ in range(times):
+            gate = threading.Barrier(2)
+            rounds.append(sorted(pool.map(go, [gate, gate])))
+            reset()
+    return rounds
+
+
+def _forget(db: sa.Engine) -> Callable[[], None]:
+    def reset() -> None:
+        with db.begin() as c:
+            c.execute(sa.delete(users).where(sa.func.lower(users.c.email) == EMAIL))
+
+    return reset
+
+
+def test_two_signups_at_once_get_one_account_and_one_409(db: sa.Engine) -> None:
+    """Check-then-insert let both pass the check, and the loser hit the index as a 500."""
+    from api.services import auth as service
+
+    def signup() -> str:
+        try:
+            service.signup(db, EMAIL, PASSWORD, datetime.now(UTC))
+        except Conflict:
+            return "conflict"
+        return "created"
+
+    for outcome in _race(signup, 5, _forget(db)):
+        assert outcome == ["conflict", "created"]
+
+
+def test_two_first_link_requests_at_once_make_one_account(db: sa.Engine) -> None:
+    from api.services import auth as service
+
+    def request() -> str:
+        service.request_link(db, EMAIL, datetime.now(UTC))
+        with db.connect() as c:
+            return str(
+                c.execute(
+                    sa.select(sa.func.count())
+                    .select_from(users)
+                    .where(sa.func.lower(users.c.email) == EMAIL)
+                ).scalar_one()
+            )
+
+    for outcome in _race(request, 5, _forget(db)):
+        assert outcome == ["1", "1"], "both answered, and there is one account"

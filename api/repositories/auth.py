@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any
 
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import insert
 
 from schema import magic_links, users
 
@@ -24,8 +25,19 @@ def credentials_by_email(conn: sa.Connection, email: str) -> sa.Row[Any] | None:
 
 def insert_user(
     conn: sa.Connection, user_id: uuid.UUID, email: str, password_hash: str | None = None
-) -> None:
-    conn.execute(sa.insert(users).values(id=user_id, email=email, password_hash=password_hash))
+) -> bool:
+    """False when the address is taken, including by a request racing this one.
+
+    The unique index decides, not a lookup beforehand: two requests can both look and
+    find nothing, and the loser then hit the index as an IntegrityError, a 500.
+    """
+    inserted = conn.execute(
+        insert(users)
+        .values(id=user_id, email=email, password_hash=password_hash)
+        .on_conflict_do_nothing(index_elements=[sa.func.lower(users.c.email)])
+        .returning(users.c.id)
+    ).first()
+    return inserted is not None
 
 
 def get_user(conn: sa.Connection, user_id: uuid.UUID) -> sa.Row[Any] | None:

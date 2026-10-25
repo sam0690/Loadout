@@ -64,7 +64,10 @@ def request_link(db: sa.Engine, email: str, now: datetime) -> None:
         user_id = repo.user_id_by_email(conn, email)
         if user_id is None:
             user_id = uuid.uuid4()
-            repo.insert_user(conn, user_id, email)
+            if not repo.insert_user(conn, user_id, email):
+                # A concurrent request created it between the lookup and the insert.
+                user_id = repo.user_id_by_email(conn, email)
+                assert user_id is not None
         if repo.count_outstanding_links(conn, user_id, now) >= MAX_OUTSTANDING_LINKS:
             # Same 202, same body. Answering differently here would turn the rate limit
             # into the enumeration oracle the endpoint was written to avoid, and would
@@ -91,9 +94,8 @@ def signup(db: sa.Engine, email: str, password: str, now: datetime) -> Session:
     email = email.strip()
     user_id = uuid.uuid4()
     with db.begin() as conn:
-        if repo.user_id_by_email(conn, email) is not None:
+        if not repo.insert_user(conn, user_id, email, hash_password(password)):
             raise Conflict("an account with that email already exists")
-        repo.insert_user(conn, user_id, email, hash_password(password))
     return issue_session(user_id, now)
 
 
