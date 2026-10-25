@@ -19,7 +19,7 @@ import jwt
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
 
 from db import DATABASE_URL, jwt_secret
 from engine.generator import Experience, Goal
@@ -69,6 +69,7 @@ class Session(BaseModel):
 class Me(BaseModel):
     id: uuid.UUID
     email: str
+    created_at: datetime
 
 
 class Profile(BaseModel):
@@ -79,6 +80,10 @@ class Profile(BaseModel):
     They are typo rails and nothing more.
     """
 
+    # Stripped first, so "  " is a 422 rather than a blank name on the profile.
+    display_name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)
+    ] | None = None
     birth_year: int | None = Field(default=None, ge=1900, le=2100)
     height_cm: int | None = Field(default=None, ge=50, le=280)
     bodyweight_kg: Decimal | None = Field(default=None, ge=20, le=500, decimal_places=2)
@@ -278,7 +283,7 @@ def me(user_id: CurrentUser, db: Annotated[sa.Engine, Depends(engine)]) -> Me:
         row = conn.execute(sa.select(users).where(users.c.id == user_id)).one_or_none()
     if row is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "no such user")
-    return Me(id=row.id, email=row.email)
+    return Me(id=row.id, email=row.email, created_at=row.created_at)
 
 
 PROFILE_FIELDS = tuple(Profile.model_fields)

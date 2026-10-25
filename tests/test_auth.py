@@ -325,7 +325,7 @@ def test_profile_starts_empty_and_survives_a_round_trip(
 ) -> None:
     token = login(client, caplog)
     assert client.get("/auth/profile", headers=auth(token)).json() == {
-        "birth_year": None, "height_cm": None, "bodyweight_kg": None,
+        "display_name": None, "birth_year": None, "height_cm": None, "bodyweight_kg": None,
         "goal": None, "experience": None, "days_per_week": None,
         "session_minutes": None,
     }
@@ -381,6 +381,24 @@ def test_out_of_range_answers_are_refused_at_the_boundary(
 ) -> None:
     token = login(client, caplog)
     assert client.put("/auth/profile", headers=auth(token), json=body).status_code == 422
+
+
+def test_display_name_is_trimmed_bounded_and_clearable(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    token = login(client, caplog)
+    put = lambda body: client.put("/auth/profile", headers=auth(token), json=body)  # noqa: E731
+    assert put({"display_name": "  Sam  "}).json()["display_name"] == "Sam"
+    assert put({"display_name": "   "}).status_code == 422
+    assert put({"display_name": "x" * 41}).status_code == 422
+    assert put({"display_name": None}).json()["display_name"] is None
+
+
+def test_me_says_when_the_account_was_made(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    token = login(client, caplog)
+    assert client.get("/auth/me", headers=auth(token)).json()["created_at"]
 
 
 def test_the_profile_needs_a_session(client: TestClient) -> None:

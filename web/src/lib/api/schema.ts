@@ -434,6 +434,11 @@ export interface components {
             id: string;
             /** Email */
             email: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** PlanOut */
         PlanOut: {
@@ -484,6 +489,8 @@ export interface components {
          *     They are typo rails and nothing more.
          */
         "Profile-Input": {
+            /** Display Name */
+            display_name?: string | null;
             /** Birth Year */
             birth_year?: number | null;
             /** Height Cm */
@@ -506,6 +513,8 @@ export interface components {
          *     They are typo rails and nothing more.
          */
         "Profile-Output": {
+            /** Display Name */
+            display_name?: string | null;
             /** Birth Year */
             birth_year?: number | null;
             /** Height Cm */

@@ -256,6 +256,7 @@ users = sa.Table(
     # time-varying and belongs in the event log the day something reads it over time —
     # a `bodyweight_logged` event plus a projection, same shape as exercise_state. That
     # day is when calisthenics progression lands (D29), not before.
+    sa.Column("display_name", sa.Text),
     sa.Column("birth_year", sa.SmallInteger),
     sa.Column("height_cm", sa.SmallInteger),
     sa.Column("bodyweight_kg", sa.Numeric(5, 2)),
@@ -277,6 +278,7 @@ users = sa.Table(
     sa.CheckConstraint(_in("experience", EXPERIENCE_LEVELS), name="ck_users_experience"),
     # Bounds are sanity rails, not medical judgement: they exist to reject a typo'd
     # 1900cm, not to tell anyone what a plausible body is.
+    sa.CheckConstraint("char_length(display_name) BETWEEN 1 AND 40", name="ck_users_display_name"),
     sa.CheckConstraint("birth_year BETWEEN 1900 AND 2100", name="ck_users_birth_year"),
     sa.CheckConstraint("height_cm BETWEEN 50 AND 280", name="ck_users_height_cm"),
     sa.CheckConstraint("bodyweight_kg BETWEEN 20 AND 500", name="ck_users_bodyweight_kg"),
