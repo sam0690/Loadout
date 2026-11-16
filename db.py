@@ -26,6 +26,11 @@ def _load_env_file(path: Path = ENV_FILE) -> None:
 def build_url() -> str:
     _load_env_file()
     if url := os.environ.get("DATABASE_URL"):
+        # Neon and Railway hand out postgresql://, which SQLAlchemy resolves to psycopg2.
+        # Only psycopg 3 is installed.
+        scheme, _, rest = url.partition("://")
+        if scheme in ("postgres", "postgresql"):
+            return f"postgresql+psycopg://{rest}"
         return url
     password = os.environ.get("POSTGRES_PASSWORD")
     if not password:

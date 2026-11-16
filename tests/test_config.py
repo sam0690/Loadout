@@ -3,6 +3,14 @@
 import pytest
 
 from api.core.config import get_settings
+from db import build_url
+
+
+@pytest.mark.parametrize("scheme", ["postgres", "postgresql", "postgresql+psycopg"])
+def test_hosted_database_urls_use_psycopg3(monkeypatch: pytest.MonkeyPatch, scheme: str) -> None:
+    """Neon and Railway give postgresql://, which would load the absent psycopg2."""
+    monkeypatch.setenv("DATABASE_URL", f"{scheme}://u:p@h/db?sslmode=require")
+    assert build_url() == "postgresql+psycopg://u:p@h/db?sslmode=require"
 
 
 def test_cors_origins_tolerate_spaces_and_a_trailing_comma(
